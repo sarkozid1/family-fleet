@@ -11,6 +11,6 @@ matrica, jogosítvány. Ezek egy része járműhöz, más része családtaghoz v
 Egyetlen `deadline` tábla, `type` mezővel és opcionális vehicle/member/policy kapcsolattal.
 
 ## Következmények
-+ Egyetlen lekérdezéssel lekérhető az összes közelgő határidő, és egy emlékeztető-job kezeli mindet.
-  − Az adatbázis nem kényszeríti ki, hogy például a TECHNICAL_INSPECTION típusnál legyen vehicle_id.
+- **Előny:** egyetlen lekérdezéssel lekérhető minden közelgő határidő; egy emlékeztető-job kezeli mindet.
+- **Hátrány:** az adatbázis nem kényszeríti ki, hogy pl. a TECHNICAL_INSPECTION típusnál legyen vehicle_id.
   Ezt a service réteg validálja.
