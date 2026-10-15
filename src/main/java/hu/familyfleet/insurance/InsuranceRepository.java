@@ -1,4 +1,6 @@
 package hu.familyfleet.insurance;
 
-public class InsuranceRepository {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface InsuranceRepository extends JpaRepository<Insurer, Long> {
 }

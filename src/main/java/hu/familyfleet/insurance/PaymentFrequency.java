@@ -1,4 +1,8 @@
 package hu.familyfleet.insurance;
 
-public class PaymentFrequency {
+public enum PaymentFrequency {
+    ANNUAL,
+    SEMI_ANNUAL,
+    QUARTERLY,
+    MONTHLY
 }

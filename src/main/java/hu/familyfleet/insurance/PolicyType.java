@@ -1,4 +1,6 @@
 package hu.familyfleet.insurance;
 
-public class PolicyType {
+public enum PolicyType {
+    KGFB,
+    CASCO
 }

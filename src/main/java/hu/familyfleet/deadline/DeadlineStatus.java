@@ -1,4 +1,7 @@
 package hu.familyfleet.deadline;
 
-public class DeadlineStatus {
+public enum DeadlineStatus {
+    OPEN,
+    DONE,
+    DISMISSED
 }

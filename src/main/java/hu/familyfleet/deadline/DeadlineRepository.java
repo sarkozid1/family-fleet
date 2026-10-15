@@ -1,4 +1,6 @@
 package hu.familyfleet.deadline;
 
-public class DeadlineRepository {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface DeadlineRepository extends JpaRepository<Deadline, Long> {
 }
