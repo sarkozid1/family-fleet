@@ -18,8 +18,20 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
 
+    /**
+     * Nyilvános GET-útvonalak: health/info, API-dokumentáció és a React-felület statikus fájljai.
+     * A felület maga nyilvános (a belépő oldal is ott van); az adatokat az API védi tokennel.
+     */
     private static final String[] PUBLIC_GET = {
-        "/actuator/health/**", "/actuator/info", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
+        "/actuator/health/**",
+        "/actuator/info",
+        "/v3/api-docs/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/",
+        "/index.html",
+        "/assets/**",
+        "/favicon.svg"
     };
 
     /**

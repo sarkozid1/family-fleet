@@ -43,6 +43,14 @@ class OperationsIntegrationTest {
                 .andExpect(jsonPath("$.java.version").isNotEmpty());
     }
 
+    /** A felület statikus fájljai bejelentkezés nélkül is elérhetők (a nem létező fájl 404, nem 401). */
+    @Test
+    void frontendStaticFilesArePublic() throws Exception {
+        mockMvc.perform(get("/assets/nincs-ilyen.js")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/favicon.svg")).andExpect(status().is(not(401)));
+        mockMvc.perform(get("/api/households")).andExpect(status().isUnauthorized());
+    }
+
     @Test
     void onlyHealthAndInfoAreExposedByDefault() throws Exception {
         mockMvc.perform(get("/actuator/metrics")).andExpect(status().isUnauthorized());

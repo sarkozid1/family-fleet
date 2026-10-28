@@ -1,5 +1,7 @@
 # Csak a buildhez szükséges fájlok kerüljenek a build-kontextusba (gyorsabb, és nem szivárog ki semmi).
 target/
+frontend/node/
+frontend/node_modules/
 .git/
 .github/
 .idea/
