@@ -72,8 +72,6 @@ később a service- és controller-osztályait tartalmazza.
 ## Dokumentáció
 
 - [Architektúra-döntések (ADR)](docs/adr) – miért döntöttünk úgy, ahogy
-- [Tanulási jegyzetek](docs/learning/README.md) – lépésenként, mit és miért csináltunk,
-  interjúkérdésekkel
 
 ## Munkafolyamat
 
