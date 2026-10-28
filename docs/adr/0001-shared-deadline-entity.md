@@ -1,4 +1,4 @@
-﻿# ADR-0001: Közös határidő-entitás
+# ADR-0001: Közös határidő-entitás
 
 ## Státusz
 Elfogadva
