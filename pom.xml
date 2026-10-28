@@ -19,7 +19,8 @@
 		<springdoc.version>3.1.1</springdoc.version>
 		<!-- Minőségi eszközök: verziójukat a Boot nem kezeli -->
 		<jacoco.version>0.8.15</jacoco.version>
-		<jacoco.minimum.line.coverage>0.70</jacoco.minimum.line.coverage>
+		<!-- A tényleges sorlefedettség ~97%; a 80% a jelentős visszaesést fogja meg, de nem kényszerít értelmetlen tesztekre -->
+		<jacoco.minimum.line.coverage>0.80</jacoco.minimum.line.coverage>
 		<spotless.version>3.10.4</spotless.version>
 		<palantir-java-format.version>2.100.0</palantir-java-format.version>
 	</properties>
