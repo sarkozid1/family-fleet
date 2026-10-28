@@ -94,17 +94,9 @@ public class Vehicle extends AuditableEntity {
 
     /** Tulajdonos csak ugyanannak a háztartásnak a tagja lehet; {@code null} = nincs tulajdonos. */
     public void assignOwner(HouseholdMember newOwner) {
-        if (newOwner != null && !sameHousehold(newOwner.getHousehold(), household)) {
+        if (newOwner != null && !household.isSameAs(newOwner.getHousehold())) {
             throw new BusinessRuleException("A tulajdonos csak a jármű háztartásának tagja lehet.");
         }
         this.owner = newOwner;
-    }
-
-    /** Mentett entitásnál azonosító szerint (proxy-biztos), mentetlennél referencia szerint hasonlít. */
-    private static boolean sameHousehold(Household a, Household b) {
-        if (a.getId() != null && b.getId() != null) {
-            return a.getId().equals(b.getId());
-        }
-        return a == b;
     }
 }

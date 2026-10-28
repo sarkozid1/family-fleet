@@ -29,6 +29,20 @@ public class Household {
         rename(name);
     }
 
+    /**
+     * Ugyanaz a háztartás-e. Mentett entitásnál azonosító szerint hasonlít (lazy proxyval is működik,
+     * mert a proxy ismeri az azonosítóját), mentetlennél referencia szerint.
+     */
+    public boolean isSameAs(Household other) {
+        if (other == null) {
+            return false;
+        }
+        if (id != null && other.getId() != null) {
+            return id.equals(other.getId());
+        }
+        return this == other;
+    }
+
     /** A név kötelező; a felesleges szóközöket levágjuk, hogy a listázás és rendezés egységes legyen. */
     public void rename(String name) {
         if (name == null || name.isBlank()) {
