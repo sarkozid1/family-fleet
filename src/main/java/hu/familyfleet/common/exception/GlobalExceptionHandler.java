@@ -17,6 +17,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Egységes hibaválaszok RFC 9457 {@link ProblemDetail} formában.
@@ -28,6 +29,17 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final String DEFAULT_CONFLICT_MESSAGE = "A művelet ütközik a meglévő adatokkal (pl. már létező érték).";
+
+    /**
+     * Az elnevezett megkötésekhez (lásd a Flyway-migrációkat) emberi üzenet tartozik. Ez csak a
+     * versenyhelyzetek végső védővonala: normál esetben a service már előbb, barátságosan jelez.
+     */
+    private static final Map<String, String> CONSTRAINT_MESSAGES = Map.of(
+            "uq_vehicle_household_plate", "Ez a rendszám már szerepel ebben a háztartásban.",
+            "uq_insurer_name", "Ilyen nevű biztosító már létezik.",
+            "ex_policy_kgfb_no_overlap", "A járműnek erre az időszakra már van érvényes KGFB-kötvénye.");
 
     /** Egy mezőhöz (vagy az egész objektumhoz) tartozó validációs hiba a válaszban. */
     public record FieldViolation(String field, String message) {}
@@ -76,8 +88,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<Object> handleDataIntegrity(DataIntegrityViolationException ex, WebRequest request) {
         log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
-        return problem(ex, HttpStatus.CONFLICT, "Ütközés",
-                "A művelet ütközik a meglévő adatokkal (pl. már létező érték).", request);
+        String detail = ConstraintNames.extract(ex)
+                .map(name -> CONSTRAINT_MESSAGES.getOrDefault(name, DEFAULT_CONFLICT_MESSAGE))
+                .orElse(DEFAULT_CONFLICT_MESSAGE);
+        return problem(ex, HttpStatus.CONFLICT, "Ütközés", detail, request);
     }
 
     /** Valaki más időközben módosította ugyanazt a rekordot (optimista zárolás). */
