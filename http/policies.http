@@ -1,0 +1,126 @@
+### Biztosító és kötvény API – IntelliJ HTTP Client
+# Előfeltétel: futó alkalmazás. Az első kérések létrehoznak egy háztartást és egy járművet.
+
+@baseUrl = http://localhost:8080
+
+### Biztosítók listája (a V2-migráció tölti fel)
+GET {{baseUrl}}/api/insurers
+
+> {% client.global.set("insurerId", response.body[0].id); %}
+
+### Új biztosító
+POST {{baseUrl}}/api/insurers
+Content-Type: application/json
+
+{
+  "name": "Példa Biztosító Zrt.",
+  "phone": "+36 1 234 5678",
+  "website": "https://pelda-biztosito.hu"
+}
+
+### HIBA: már létező név (kis/nagybetűtől függetlenül) -> 409
+POST {{baseUrl}}/api/insurers
+Content-Type: application/json
+
+{
+  "name": "uniqa"
+}
+
+### Háztartás
+POST {{baseUrl}}/api/households
+Content-Type: application/json
+
+{
+  "name": "Biztosított család"
+}
+
+> {% client.global.set("householdId", response.body.id); %}
+
+### Jármű
+POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Content-Type: application/json
+
+{
+  "type": "CAR",
+  "brand": "Skoda",
+  "model": "Octavia",
+  "licensePlate": "KGF-001"
+}
+
+> {% client.global.set("vehicleId", response.body.id); %}
+
+### KGFB-kötvény (határozatlan idejű) -> 201
+POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Content-Type: application/json
+
+{
+  "insurerId": {{insurerId}},
+  "policyType": "KGFB",
+  "policyNumber": "KGFB-2026-0001",
+  "startDate": "2026-03-01",
+  "annualPremium": 52000,
+  "paymentFrequency": "QUARTERLY"
+}
+
+> {%
+    client.global.set("policyId", response.body.id);
+    client.global.set("policyVersion", response.body.version);
+%}
+
+### HIBA: második, átfedő KGFB ugyanarra a járműre -> 409
+POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Content-Type: application/json
+
+{
+  "insurerId": {{insurerId}},
+  "policyType": "KGFB",
+  "startDate": "2026-09-01",
+  "annualPremium": 49000,
+  "paymentFrequency": "ANNUAL"
+}
+
+### CASCO a KGFB mellé -> 201
+POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Content-Type: application/json
+
+{
+  "insurerId": {{insurerId}},
+  "policyType": "CASCO",
+  "startDate": "2026-03-01",
+  "endDate": "2027-03-01",
+  "annualPremium": 180000,
+  "paymentFrequency": "MONTHLY"
+}
+
+### HIBA: záró dátum a kezdő előtt -> 400
+POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Content-Type: application/json
+
+{
+  "insurerId": {{insurerId}},
+  "policyType": "CASCO",
+  "startDate": "2026-03-01",
+  "endDate": "2026-02-01",
+  "annualPremium": 180000,
+  "paymentFrequency": "ANNUAL"
+}
+
+### A jármű kötvényei (legfrissebb elöl)
+GET {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+
+### Egy kötvény
+GET {{baseUrl}}/api/policies/{{policyId}}
+
+### Kötvény lezárása (a letöltött verzióval)
+PUT {{baseUrl}}/api/policies/{{policyId}}
+Content-Type: application/json
+
+{
+  "insurerId": {{insurerId}},
+  "policyNumber": "KGFB-2026-0001",
+  "startDate": "2026-03-01",
+  "endDate": "2027-03-01",
+  "annualPremium": 52000,
+  "paymentFrequency": "QUARTERLY",
+  "version": {{policyVersion}}
+}

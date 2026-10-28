@@ -4,18 +4,16 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+/** Biztosító: törzsadat, amelyet minden háztartás közösen használ. */
 @Entity
 @Table(name = "insurer")
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Insurer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(AccessLevel.NONE)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -27,6 +25,19 @@ public class Insurer {
     private String website;
 
     public Insurer(String name) {
-        this.name = name;
+        this(name, null, null);
+    }
+
+    public Insurer(String name, String phone, String website) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Insurer name must not be blank");
+        }
+        this.name = name.strip();
+        this.phone = blankToNull(phone);
+        this.website = blankToNull(website);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 }
