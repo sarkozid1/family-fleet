@@ -12,6 +12,12 @@ spring:
       hibernate:
         format_sql: true
 
+app:
+  security:
+    jwt:
+      # CSAK fejlesztéshez! Élesben a JWT_SECRET környezeti változó adja (legalább 32 karakter).
+      secret: dev-only-secret-change-me-0123456789abcdef
+
 logging:
   level:
     # A generált SQL a logban (a show-sql helyett a logger a helyes módszer). Csak fejlesztéskor!
