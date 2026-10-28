@@ -5,6 +5,8 @@ import hu.familyfleet.TestcontainersConfiguration;
 import hu.familyfleet.deadline.Deadline;
 import hu.familyfleet.deadline.DeadlineRepository;
 import hu.familyfleet.deadline.DeadlineType;
+import hu.familyfleet.household.Household;
+import hu.familyfleet.household.HouseholdRepository;
 import hu.familyfleet.insurance.InsurancePolicy;
 import hu.familyfleet.insurance.InsurancePolicyRepository;
 import hu.familyfleet.insurance.InsurerRepository;
@@ -47,6 +49,9 @@ class VehicleApiIntegrationTest {
 
     @Autowired
     private DeadlineRepository deadlineRepository;
+
+    @Autowired
+    private HouseholdRepository householdRepository;
 
     @Test
     void vehicleLifecycleWithOptimisticLocking() throws Exception {
@@ -163,9 +168,10 @@ class VehicleApiIntegrationTest {
         policyRepository.save(new InsurancePolicy(policyVehicle, insurerRepository.findAll().getFirst(),
                 PolicyType.KGFB, LocalDate.of(2026, 1, 1), new BigDecimal("52000"), PaymentFrequency.ANNUAL));
         Vehicle deadlineVehicle = vehicleRepository.findById(withDeadline).orElseThrow();
-        Deadline deadline = new Deadline(deadlineVehicle.getHousehold(), DeadlineType.TECHNICAL_INSPECTION,
-                LocalDate.of(2027, 4, 30));
-        deadline.setVehicle(deadlineVehicle);
+        // A tranzakción kívül betöltött jármű háztartása lazy proxy session nélkül, ezért külön töltjük be.
+        Household household = householdRepository.findById(householdId).orElseThrow();
+        Deadline deadline = new Deadline(household, DeadlineType.TECHNICAL_INSPECTION,
+                LocalDate.of(2027, 4, 30), deadlineVehicle, null, null);
         deadlineRepository.save(deadline);
 
         mockMvc.perform(delete("/api/vehicles/{id}", withPolicy))

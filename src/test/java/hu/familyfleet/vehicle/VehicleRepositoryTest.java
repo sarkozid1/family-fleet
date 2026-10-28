@@ -109,8 +109,8 @@ class VehicleRepositoryTest {
         Insurer insurer = insurerRepository.findAll().getFirst();
         policyRepository.save(new InsurancePolicy(withPolicy, insurer, PolicyType.KGFB,
                 LocalDate.of(2026, 1, 1), new BigDecimal("45000"), PaymentFrequency.ANNUAL));
-        Deadline deadline = new Deadline(household, DeadlineType.TECHNICAL_INSPECTION, LocalDate.of(2027, 5, 1));
-        deadline.setVehicle(withDeadline);
+        Deadline deadline = new Deadline(household, DeadlineType.TECHNICAL_INSPECTION, LocalDate.of(2027, 5, 1),
+                withDeadline, null, null);
         deadlineRepository.save(deadline);
 
         assertThat(vehicleRepository.hasPolicies(withPolicy.getId())).isTrue();

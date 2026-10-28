@@ -14,4 +14,11 @@ public record VehicleCreateRequest(
         String vin,
         @Min(1900) @Max(2100) Short productionYear,
         @PositiveOrZero Integer currentMileage,
-        Long ownerId) {}
+        Long ownerId,
+        /* Ha true, a következő gépjárműadó-esedékesség határidőként rögzül (pl. elektromos autónál nincs adó). */
+        Boolean generateTaxDeadline) {
+
+    public boolean shouldGenerateTaxDeadline() {
+        return Boolean.TRUE.equals(generateTaxDeadline);
+    }
+}

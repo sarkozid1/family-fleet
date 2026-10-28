@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -45,6 +46,9 @@ class PolicyServiceTest {
     @Mock
     private VehicleRepository vehicleRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private PolicyService policyService;
 
     private final Vehicle vehicle = new Vehicle(new Household("Teszt család"), VehicleType.CAR, "Skoda", "Octavia", "ABC123");
@@ -52,7 +56,7 @@ class PolicyServiceTest {
 
     @BeforeEach
     void setUp() {
-        policyService = new PolicyService(policyRepository, insurerRepository, vehicleRepository, CLOCK);
+        policyService = new PolicyService(policyRepository, insurerRepository, vehicleRepository, CLOCK, eventPublisher);
     }
 
     @Test
@@ -80,6 +84,7 @@ class PolicyServiceTest {
         assertThat(response.policyType()).isEqualTo(PolicyType.KGFB);
         assertThat(response.insurerName()).isEqualTo("Teszt Biztosító");
         assertThat(response.active()).as("2026-10-01-jén indult, a rögzített mai nap 2026-10-28").isTrue();
+        verify(eventPublisher).publishEvent(any(PolicyCreatedEvent.class));
     }
 
     @Test

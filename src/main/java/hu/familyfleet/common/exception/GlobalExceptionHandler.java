@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
@@ -54,6 +55,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .toList();
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "A kérés adatai érvénytelenek.");
+        problem.setTitle("Validációs hiba");
+        problem.setProperty("errors", errors);
+        return handleExceptionInternal(ex, problem, headers, HttpStatus.BAD_REQUEST, request);
+    }
+
+    /** Path- és query-paraméterek validációja (pl. {@code ?days=0} a {@code @Min(1)} ellen): ugyanaz a forma. */
+    @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(
+            HandlerMethodValidationException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        List<FieldViolation> errors = ex.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> new FieldViolation(
+                                result.getMethodParameter().getParameterName(), error.getDefaultMessage())))
+                .toList();
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "A kérés paraméterei érvénytelenek.");
         problem.setTitle("Validációs hiba");
         problem.setProperty("errors", errors);
         return handleExceptionInternal(ex, problem, headers, HttpStatus.BAD_REQUEST, request);
