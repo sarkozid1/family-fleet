@@ -1,21 +1,5 @@
 package hu.familyfleet.security;
 
-import hu.familyfleet.security.dto.LoginRequest;
-import hu.familyfleet.security.dto.TokenResponse;
-import hu.familyfleet.security.dto.UserResponse;
-import hu.familyfleet.support.WebSecurityTestConfig;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.hasItem;
@@ -25,6 +9,21 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import hu.familyfleet.security.dto.LoginRequest;
+import hu.familyfleet.security.dto.TokenResponse;
+import hu.familyfleet.security.dto.UserResponse;
+import hu.familyfleet.support.WebSecurityTestConfig;
+import java.time.Instant;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
 @Import(WebSecurityTestConfig.class)
@@ -38,8 +37,9 @@ class AuthControllerTest {
 
     @Test
     void registerIsPublicAndReturns201() throws Exception {
-        given(authService.register(any())).willReturn(new UserResponse(1L, "anna@example.com", "Anna", Role.USER,
-                Instant.parse("2026-10-28T10:00:00Z")));
+        given(authService.register(any()))
+                .willReturn(new UserResponse(
+                        1L, "anna@example.com", "Anna", Role.USER, Instant.parse("2026-10-28T10:00:00Z")));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,8 +100,9 @@ class AuthControllerTest {
     @Test
     @WithMockUser
     void meReturnsCurrentUserWhenAuthenticated() throws Exception {
-        given(authService.me()).willReturn(new UserResponse(1L, "anna@example.com", "Anna", Role.USER,
-                Instant.parse("2026-10-28T10:00:00Z")));
+        given(authService.me())
+                .willReturn(new UserResponse(
+                        1L, "anna@example.com", "Anna", Role.USER, Instant.parse("2026-10-28T10:00:00Z")));
 
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isOk())
@@ -110,6 +111,7 @@ class AuthControllerTest {
 
     @Test
     void passwordIsNeverPartOfToString() {
-        assertThat(new LoginRequest("anna@example.com", "nagyon-titkos-1").toString()).doesNotContain("titkos");
+        assertThat(new LoginRequest("anna@example.com", "nagyon-titkos-1").toString())
+                .doesNotContain("titkos");
     }
 }

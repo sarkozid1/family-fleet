@@ -3,7 +3,6 @@ package hu.familyfleet.insurance.dto;
 import hu.familyfleet.insurance.InsurancePolicy;
 import hu.familyfleet.insurance.PaymentFrequency;
 import hu.familyfleet.insurance.PolicyType;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;

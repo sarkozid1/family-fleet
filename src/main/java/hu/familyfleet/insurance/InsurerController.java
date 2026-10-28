@@ -4,13 +4,12 @@ import hu.familyfleet.insurance.dto.InsurerRequest;
 import hu.familyfleet.insurance.dto.InsurerResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @Tag(name = "Biztosítók", description = "Közös biztosító-törzsadat")
 @RestController

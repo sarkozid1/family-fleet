@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import hu.familyfleet.insurance.PaymentFrequency;
 import hu.familyfleet.insurance.PolicyType;
 import jakarta.validation.constraints.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -15,7 +14,10 @@ public record PolicyCreateRequest(
         @Size(max = 50) String policyNumber,
         @NotNull LocalDate startDate,
         LocalDate endDate,
-        @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2) BigDecimal annualPremium,
+
+        @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2)
+        BigDecimal annualPremium,
+
         @NotNull PaymentFrequency paymentFrequency) {
 
     /** Mezőnkénti hibaüzenethez már a DTO-n is ellenőrizzük; a végső szabály az entitásban van. */

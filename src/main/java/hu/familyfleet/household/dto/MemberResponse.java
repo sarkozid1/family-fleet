@@ -1,7 +1,6 @@
 package hu.familyfleet.household.dto;
 
 import hu.familyfleet.household.HouseholdMember;
-
 import java.time.Instant;
 
 public record MemberResponse(Long id, Long householdId, String name, String email, Instant createdAt) {

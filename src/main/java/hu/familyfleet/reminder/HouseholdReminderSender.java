@@ -7,17 +7,16 @@ import hu.familyfleet.household.Household;
 import hu.familyfleet.household.HouseholdMember;
 import hu.familyfleet.household.HouseholdMemberRepository;
 import hu.familyfleet.household.HouseholdRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.mail.MailSender;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Egy háztartás napi emlékeztetője, saját tranzakcióban.
@@ -31,7 +30,12 @@ import java.util.Objects;
 @RequiredArgsConstructor
 class HouseholdReminderSender {
 
-    enum Outcome { SENT, ALREADY_SENT, NOTHING_DUE, NO_RECIPIENTS }
+    enum Outcome {
+        SENT,
+        ALREADY_SENT,
+        NOTHING_DUE,
+        NO_RECIPIENTS
+    }
 
     private final ReminderLogRepository logRepository;
     private final DeadlineRepository deadlineRepository;
@@ -58,10 +62,12 @@ class HouseholdReminderSender {
         if (recipients.length == 0) {
             return Outcome.NO_RECIPIENTS;
         }
-        Household household = householdRepository.findById(householdId)
+        Household household = householdRepository
+                .findById(householdId)
                 .orElseThrow(() -> new ResourceNotFoundException("Háztartás", householdId));
 
-        logRepository.saveAndFlush(new ReminderLog(household, today, recipients.length, deadlines.size(), clock.instant()));
+        logRepository.saveAndFlush(
+                new ReminderLog(household, today, recipients.length, deadlines.size(), clock.instant()));
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(properties.from());

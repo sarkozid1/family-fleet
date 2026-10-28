@@ -1,19 +1,19 @@
 package hu.familyfleet.household;
 
+import static org.hamcrest.Matchers.contains;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import hu.familyfleet.TestcontainersConfiguration;
 import hu.familyfleet.support.TestAuth;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.web.context.WebApplicationContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import static org.hamcrest.Matchers.contains;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.web.context.WebApplicationContext;
 
 /**
  * Végponttól végpontig: HTTP -> controller -> service -> JPA -> valódi PostgreSQL (Testcontainers).
@@ -43,7 +43,9 @@ class HouseholdApiIntegrationTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Szabó család"))
-                .andReturn().getResponse().getHeader("Location");
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
 
         mockMvc.perform(put(householdUrl)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -59,7 +61,9 @@ class HouseholdApiIntegrationTest {
                                 { "name": "Péter", "email": "Peter@Example.com" }
                                 """))
                 .andExpect(status().isCreated())
-                .andReturn().getResponse().getHeader("Location");
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
         mockMvc.perform(post(householdUrl + "/members")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

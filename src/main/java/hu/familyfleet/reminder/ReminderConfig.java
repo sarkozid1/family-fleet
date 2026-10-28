@@ -7,5 +7,4 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configuration(proxyBeanMethods = false)
 @EnableScheduling
 @EnableConfigurationProperties(ReminderProperties.class)
-class ReminderConfig {
-}
+class ReminderConfig {}

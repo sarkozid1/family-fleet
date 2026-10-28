@@ -1,5 +1,8 @@
 package hu.familyfleet.common.logging;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -8,10 +11,6 @@ import org.slf4j.MDC;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class RequestIdFilterTest {
 
@@ -25,7 +24,13 @@ class RequestIdFilterTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = {"has space", "line\nbreak", "<script>", "a{65 chars}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
+    @ValueSource(
+            strings = {
+                "has space",
+                "line\nbreak",
+                "<script>",
+                "a{65 chars}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            })
     void replacesMissingOrUnsafeIdWithUuid(String incoming) {
         String resolved = RequestIdFilter.resolveRequestId(incoming);
 

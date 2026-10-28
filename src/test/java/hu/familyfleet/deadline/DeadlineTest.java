@@ -1,5 +1,8 @@
 package hu.familyfleet.deadline;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.common.exception.ConflictException;
 import hu.familyfleet.household.Household;
@@ -10,16 +13,12 @@ import hu.familyfleet.insurance.PaymentFrequency;
 import hu.familyfleet.insurance.PolicyType;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 class DeadlineTest {
 
@@ -29,8 +28,13 @@ class DeadlineTest {
     private final Household household = new Household("Kovács család");
     private final Vehicle vehicle = new Vehicle(household, VehicleType.CAR, "Skoda", "Octavia", "ABC123");
     private final HouseholdMember member = new HouseholdMember(household, "Anna", null);
-    private final InsurancePolicy policy = new InsurancePolicy(vehicle, new Insurer("Biztosító"), PolicyType.KGFB,
-            LocalDate.of(2026, 1, 1), new BigDecimal("50000"), PaymentFrequency.ANNUAL);
+    private final InsurancePolicy policy = new InsurancePolicy(
+            vehicle,
+            new Insurer("Biztosító"),
+            PolicyType.KGFB,
+            LocalDate.of(2026, 1, 1),
+            new BigDecimal("50000"),
+            PaymentFrequency.ANNUAL);
 
     @Test
     void markDoneSetsStatusAndCompletionTime() {
@@ -73,13 +77,15 @@ class DeadlineTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = DeadlineType.class,
+    @EnumSource(
+            value = DeadlineType.class,
             names = {"TECHNICAL_INSPECTION", "OIL_CHANGE", "TIRE_CHANGE", "VEHICLE_TAX", "MOTORWAY_VIGNETTE"})
     void vehicleTypesRequireVehicle(DeadlineType type) {
         assertThatThrownBy(() -> new Deadline(household, type, DUE, null, member, null))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("vehicleId");
-        assertThat(new Deadline(household, type, DUE, vehicle, null, null).getVehicle()).isSameAs(vehicle);
+        assertThat(new Deadline(household, type, DUE, vehicle, null, null).getVehicle())
+                .isSameAs(vehicle);
     }
 
     @Test
@@ -90,7 +96,9 @@ class DeadlineTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = DeadlineType.class, names = {"INSURANCE_PAYMENT", "KGFB_ANNIVERSARY"})
+    @EnumSource(
+            value = DeadlineType.class,
+            names = {"INSURANCE_PAYMENT", "KGFB_ANNIVERSARY"})
     void policyTypesRequirePolicyAndInheritItsVehicle(DeadlineType type) {
         assertThatThrownBy(() -> new Deadline(household, type, DUE, vehicle, null, null))
                 .isInstanceOf(BusinessRuleException.class)
@@ -102,7 +110,8 @@ class DeadlineTest {
 
     @Test
     void otherNeedsNoLink() {
-        assertThat(new Deadline(household, DeadlineType.OTHER, DUE, null, null, null).isOpen()).isTrue();
+        assertThat(new Deadline(household, DeadlineType.OTHER, DUE, null, null, null).isOpen())
+                .isTrue();
     }
 
     @Test
@@ -111,7 +120,8 @@ class DeadlineTest {
         Vehicle foreignVehicle = new Vehicle(other, VehicleType.CAR, "Opel", "Astra", "XYZ987");
         HouseholdMember foreignMember = new HouseholdMember(other, "Béla", null);
 
-        assertThatThrownBy(() -> new Deadline(household, DeadlineType.TECHNICAL_INSPECTION, DUE, foreignVehicle, null, null))
+        assertThatThrownBy(() ->
+                        new Deadline(household, DeadlineType.TECHNICAL_INSPECTION, DUE, foreignVehicle, null, null))
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(() -> new Deadline(household, DeadlineType.DRIVING_LICENCE, DUE, null, foreignMember, null))
                 .isInstanceOf(BusinessRuleException.class);

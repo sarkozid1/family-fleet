@@ -19,7 +19,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_GET = {
-            "/actuator/health/**", "/actuator/info", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
+        "/actuator/health/**", "/actuator/info", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
     };
 
     /**
@@ -30,26 +30,31 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter,
-            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) throws Exception {
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver)
+            throws Exception {
         http
                 // Nincs cookie-alapú hitelesítés (a token fejlécben jön, a böngésző nem küldi magától),
                 // ezért CSRF-támadás ellen nem kell token; session sem kell.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, PUBLIC_GET).permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/insurers").hasRole(Role.ADMIN.name())
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
-                        .authenticationEntryPoint((request, response, ex) ->
-                                exceptionResolver.resolveException(request, response, null, ex))
-                        .accessDeniedHandler((request, response, ex) ->
-                                exceptionResolver.resolveException(request, response, null, ex)))
-                .exceptionHandling(handling -> handling
-                        .authenticationEntryPoint((request, response, ex) ->
+                .authorizeHttpRequests(
+                        auth -> auth.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.GET, PUBLIC_GET)
+                                .permitAll()
+                                .requestMatchers("/error")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/insurers")
+                                .hasRole(Role.ADMIN.name())
+                                .anyRequest()
+                                .authenticated())
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                                .authenticationEntryPoint((request, response, ex) ->
+                                        exceptionResolver.resolveException(request, response, null, ex))
+                                .accessDeniedHandler((request, response, ex) ->
+                                        exceptionResolver.resolveException(request, response, null, ex)))
+                .exceptionHandling(handling -> handling.authenticationEntryPoint((request, response, ex) ->
                                 exceptionResolver.resolveException(request, response, null, ex))
                         .accessDeniedHandler((request, response, ex) ->
                                 exceptionResolver.resolveException(request, response, null, ex)));

@@ -28,18 +28,18 @@ public class OpenApiConfig {
         BuildProperties build = buildProperties.getIfAvailable();
         String version = build == null ? "dev" : build.getVersion();
         return new OpenAPI()
-                .info(new Info()
-                        .title("Family Fleet API")
-                        .version(version)
-                        .description("""
+                .info(new Info().title("Family Fleet API").version(version).description("""
                                 Családi járműnyilvántartó: háztartások, családtagok, járművek, biztosítások és \
                                 határidők (műszaki vizsga, KGFB-évforduló, gépjárműadó, matrica). \
                                 Hitelesítés: POST /api/auth/login, majd Authorization: Bearer <token>. \
                                 A hibák RFC 9457 `application/problem+json` formában érkeznek."""))
-                .components(new Components().addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
-                        .type(SecurityScheme.Type.HTTP)
-                        .scheme("bearer")
-                        .bearerFormat("JWT")))
+                .components(new Components()
+                        .addSecuritySchemes(
+                                BEARER_AUTH,
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH));
     }
 }

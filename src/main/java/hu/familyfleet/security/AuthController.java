@@ -7,12 +7,11 @@ import hu.familyfleet.security.dto.UserResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
 
 @Tag(name = "Hitelesítés", description = "Regisztráció, bejelentkezés (JWT) és a saját fiók")
 @RestController
@@ -26,7 +25,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse created = authService.register(request);
-        URI location = ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/auth/me").build().toUri();
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/auth/me")
+                .build()
+                .toUri();
         return ResponseEntity.created(location).body(created);
     }
 

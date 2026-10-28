@@ -4,15 +4,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.regex.Pattern;
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.UUID;
-import java.util.regex.Pattern;
 
 /**
  * Minden kéréshez azonosítót rendel, és az MDC-be teszi, így a kérés összes logsora
@@ -45,6 +44,8 @@ public class RequestIdFilter extends OncePerRequestFilter {
     }
 
     static String resolveRequestId(String incoming) {
-        return incoming != null && SAFE_ID.matcher(incoming).matches() ? incoming : UUID.randomUUID().toString();
+        return incoming != null && SAFE_ID.matcher(incoming).matches()
+                ? incoming
+                : UUID.randomUUID().toString();
     }
 }

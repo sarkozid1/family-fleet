@@ -6,14 +6,13 @@ import hu.familyfleet.security.dto.LoginRequest;
 import hu.familyfleet.security.dto.RegisterRequest;
 import hu.familyfleet.security.dto.TokenResponse;
 import hu.familyfleet.security.dto.UserResponse;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +32,8 @@ public class AuthService {
         if (userRepository.existsByEmail(email)) {
             throw new ConflictException("Ezzel az e-mail-címmel már regisztráltak.");
         }
-        AppUser user = userRepository.save(new AppUser(
-                email, passwordEncoder.encode(request.password()), request.displayName(), Role.USER));
+        AppUser user = userRepository.save(
+                new AppUser(email, passwordEncoder.encode(request.password()), request.displayName(), Role.USER));
         return UserResponse.from(user);
     }
 
@@ -45,7 +44,9 @@ public class AuthService {
     public TokenResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
-        AppUser user = userRepository.findByEmail(AppUser.normalizeEmail(request.email())).orElseThrow();
+        AppUser user = userRepository
+                .findByEmail(AppUser.normalizeEmail(request.email()))
+                .orElseThrow();
         JwtTokenService.IssuedToken token = tokenService.issue(user);
         // A kibocsátás pillanatából számolunk: egy második órahívás közben eltelt idő miatt 3599 jöhetne ki.
         long expiresIn = Duration.between(token.issuedAt(), token.expiresAt()).toSeconds();
@@ -54,7 +55,8 @@ public class AuthService {
 
     public UserResponse me() {
         Long id = currentUser.id();
-        return userRepository.findById(id)
+        return userRepository
+                .findById(id)
                 .map(UserResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("Felhasználó", id));
     }

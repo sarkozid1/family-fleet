@@ -1,8 +1,7 @@
 package hu.familyfleet.reminder;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.time.LocalDate;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReminderLogRepository extends JpaRepository<ReminderLog, Long> {
 

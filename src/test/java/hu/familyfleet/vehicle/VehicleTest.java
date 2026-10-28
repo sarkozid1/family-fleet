@@ -1,5 +1,8 @@
 package hu.familyfleet.vehicle;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.household.Household;
 import hu.familyfleet.household.HouseholdMember;
@@ -7,20 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 class VehicleTest {
 
     private final Household household = new Household("Kovács család");
 
     @ParameterizedTest
-    @CsvSource({
-        "abc-123,   ABC123",
-        "' ABC 123 ', ABC123",
-        "aa-bc-123, AABC123",
-        "AA BC-123, AABC123"
-    })
+    @CsvSource({"abc-123,   ABC123", "' ABC 123 ', ABC123", "aa-bc-123, AABC123", "AA BC-123, AABC123"})
     void normalizesLicensePlate(String input, String expected) {
         assertThat(new Vehicle(household, VehicleType.CAR, "Skoda", "Octavia", input).getLicensePlate())
                 .isEqualTo(expected);

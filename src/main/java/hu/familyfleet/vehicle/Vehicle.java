@@ -5,11 +5,10 @@ import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.household.Household;
 import hu.familyfleet.household.HouseholdMember;
 import jakarta.persistence.*;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Objects;
 
 @Entity
 @Table(name = "vehicle")
@@ -86,8 +85,8 @@ public class Vehicle extends AuditableEntity {
             throw new BusinessRuleException("A km-óra állása nem lehet negatív.");
         }
         if (newMileage < currentMileage) {
-            throw new BusinessRuleException(
-                    "A km-óra állása nem csökkenhet (jelenlegi: %d km, új: %d km).".formatted(currentMileage, newMileage));
+            throw new BusinessRuleException("A km-óra állása nem csökkenhet (jelenlegi: %d km, új: %d km)."
+                    .formatted(currentMileage, newMileage));
         }
         this.currentMileage = newMileage;
     }

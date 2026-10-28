@@ -1,17 +1,16 @@
 package hu.familyfleet.security;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.time.Clock;
 
 /** A token aláírásához és ellenőrzéséhez ugyanaz a szimmetrikus (HS256) kulcs kell (lásd ADR-0003). */
 @Configuration(proxyBeanMethods = false)
@@ -39,8 +38,8 @@ class JwtConfig {
                 .build();
         JwtTimestampValidator timestampValidator = new JwtTimestampValidator();
         timestampValidator.setClock(clock);
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-                timestampValidator, new JwtIssuerValidator(properties.issuer())));
+        decoder.setJwtValidator(
+                new DelegatingOAuth2TokenValidator<>(timestampValidator, new JwtIssuerValidator(properties.issuer())));
         return decoder;
     }
 }

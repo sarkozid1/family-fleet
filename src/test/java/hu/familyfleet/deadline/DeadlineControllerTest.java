@@ -1,27 +1,5 @@
 package hu.familyfleet.deadline;
 
-import hu.familyfleet.common.exception.ConflictException;
-import hu.familyfleet.common.web.PageResponse;
-import hu.familyfleet.deadline.dto.CompleteDeadlineRequest;
-import hu.familyfleet.deadline.dto.CompleteDeadlineResponse;
-import hu.familyfleet.deadline.dto.DeadlineResponse;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.test.context.support.WithMockUser;
-import hu.familyfleet.support.WebSecurityTestConfig;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +11,27 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import hu.familyfleet.common.exception.ConflictException;
+import hu.familyfleet.common.web.PageResponse;
+import hu.familyfleet.deadline.dto.CompleteDeadlineRequest;
+import hu.familyfleet.deadline.dto.CompleteDeadlineResponse;
+import hu.familyfleet.deadline.dto.DeadlineResponse;
+import hu.familyfleet.support.WebSecurityTestConfig;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @Import(WebSecurityTestConfig.class)
 @WithMockUser
@@ -85,8 +84,14 @@ class DeadlineControllerTest {
                 .andExpect(jsonPath("$.content[0].id").value(9));
 
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
-        verify(deadlineService).search(eq(1L), eq(DeadlineStatus.OPEN), eq(DeadlineType.VEHICLE_TAX),
-                eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 12, 31)), pageable.capture());
+        verify(deadlineService)
+                .search(
+                        eq(1L),
+                        eq(DeadlineStatus.OPEN),
+                        eq(DeadlineType.VEHICLE_TAX),
+                        eq(LocalDate.of(2026, 1, 1)),
+                        eq(LocalDate.of(2026, 12, 31)),
+                        pageable.capture());
         assertThat(pageable.getValue().getSort()).isEqualTo(Sort.by("dueDate", "id"));
     }
 
@@ -119,7 +124,8 @@ class DeadlineControllerTest {
     @Test
     void completeWorksWithoutBody() throws Exception {
         given(deadlineService.complete(eq(9L), isNull()))
-                .willReturn(new CompleteDeadlineResponse(response(9L, DeadlineStatus.DONE), response(10L, DeadlineStatus.OPEN)));
+                .willReturn(new CompleteDeadlineResponse(
+                        response(9L, DeadlineStatus.DONE), response(10L, DeadlineStatus.OPEN)));
 
         mockMvc.perform(post("/api/deadlines/9/complete"))
                 .andExpect(status().isOk())
@@ -151,7 +157,21 @@ class DeadlineControllerTest {
     }
 
     private static DeadlineResponse response(Long id, DeadlineStatus status) {
-        return new DeadlineResponse(id, 1L, 3L, null, null, DeadlineType.VEHICLE_TAX, "Gépjárműadó – ABC123",
-                LocalDate.of(2027, 3, 15), status, 138, status == DeadlineStatus.DONE ? NOW : null, null, 0L, NOW, NOW);
+        return new DeadlineResponse(
+                id,
+                1L,
+                3L,
+                null,
+                null,
+                DeadlineType.VEHICLE_TAX,
+                "Gépjárműadó – ABC123",
+                LocalDate.of(2027, 3, 15),
+                status,
+                138,
+                status == DeadlineStatus.DONE ? NOW : null,
+                null,
+                0L,
+                NOW,
+                NOW);
     }
 }

@@ -1,12 +1,17 @@
 package hu.familyfleet.insurance;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import hu.familyfleet.TestcontainersConfiguration;
+import hu.familyfleet.common.exception.ConstraintNames;
 import hu.familyfleet.household.Household;
 import hu.familyfleet.household.HouseholdRepository;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleRepository;
 import hu.familyfleet.vehicle.VehicleType;
-import hu.familyfleet.common.exception.ConstraintNames;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +19,6 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** A V3-migráció megkötései valódi PostgreSQL-en: ezek a szabályok a kód megkerülésével sem sérülhetnek. */
 @DataJpaTest
@@ -90,7 +89,7 @@ class InsurancePolicyRepositoryTest {
     }
 
     private InsurancePolicy policy(PolicyType type, LocalDate start, LocalDate end) {
-        return new InsurancePolicy(vehicle, insurer, type, null, start, end, new BigDecimal("50000"),
-                PaymentFrequency.ANNUAL);
+        return new InsurancePolicy(
+                vehicle, insurer, type, null, start, end, new BigDecimal("50000"), PaymentFrequency.ANNUAL);
     }
 }

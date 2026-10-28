@@ -1,5 +1,12 @@
 package hu.familyfleet.deadline;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.common.exception.ResourceNotFoundException;
 import hu.familyfleet.deadline.dto.CompleteDeadlineRequest;
@@ -15,25 +22,17 @@ import hu.familyfleet.insurance.InsurancePolicyRepository;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleRepository;
 import hu.familyfleet.vehicle.VehicleType;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * A határidő-service szabályai rögzített órával (2026-10-28, Budapest). A repository-k mockok,
@@ -47,14 +46,19 @@ class DeadlineServiceTest {
 
     @Mock
     private DeadlineRepository deadlineRepository;
+
     @Mock
     private HouseholdRepository householdRepository;
+
     @Mock
     private VehicleRepository vehicleRepository;
+
     @Mock
     private HouseholdMemberRepository memberRepository;
+
     @Mock
     private InsurancePolicyRepository policyRepository;
+
     @Mock
     private HouseholdAccessGuard accessGuard;
 
@@ -65,9 +69,17 @@ class DeadlineServiceTest {
 
     @BeforeEach
     void setUp() {
-        DeadlineGenerator generator = new DeadlineGenerator(deadlineRepository, vehicleRepository, policyRepository, CLOCK);
-        service = new DeadlineService(deadlineRepository, householdRepository, vehicleRepository, memberRepository,
-                policyRepository, generator, CLOCK, accessGuard);
+        DeadlineGenerator generator =
+                new DeadlineGenerator(deadlineRepository, vehicleRepository, policyRepository, CLOCK);
+        service = new DeadlineService(
+                deadlineRepository,
+                householdRepository,
+                vehicleRepository,
+                memberRepository,
+                policyRepository,
+                generator,
+                CLOCK,
+                accessGuard);
     }
 
     @Test
@@ -76,8 +88,8 @@ class DeadlineServiceTest {
         given(vehicleRepository.findById(2L)).willReturn(Optional.of(vehicle));
         given(deadlineRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
-        DeadlineResponse response = service.create(1L,
-                new DeadlineCreateRequest(DeadlineType.VEHICLE_TAX, null, null, null, 2L, null, null));
+        DeadlineResponse response = service.create(
+                1L, new DeadlineCreateRequest(DeadlineType.VEHICLE_TAX, null, null, null, 2L, null, null));
 
         assertThat(response.dueDate()).isEqualTo(LocalDate.of(2027, 3, 15));
         assertThat(response.title()).isEqualTo("Gépjárműadó – ABC123");
@@ -90,8 +102,10 @@ class DeadlineServiceTest {
         given(vehicleRepository.findById(2L)).willReturn(Optional.of(vehicle));
         given(deadlineRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
-        DeadlineResponse response = service.create(1L, new DeadlineCreateRequest(
-                DeadlineType.MOTORWAY_VIGNETTE, null, "Matrica a nyaraláshoz", null, 2L, null, null));
+        DeadlineResponse response = service.create(
+                1L,
+                new DeadlineCreateRequest(
+                        DeadlineType.MOTORWAY_VIGNETTE, null, "Matrica a nyaraláshoz", null, 2L, null, null));
 
         assertThat(response.dueDate()).isEqualTo(LocalDate.of(2027, 1, 31));
         assertThat(response.title()).isEqualTo("Matrica a nyaraláshoz");
@@ -102,8 +116,9 @@ class DeadlineServiceTest {
         given(householdRepository.findById(1L)).willReturn(Optional.of(household));
         given(vehicleRepository.findById(2L)).willReturn(Optional.of(vehicle));
 
-        assertThatThrownBy(() -> service.create(1L, new DeadlineCreateRequest(
-                        DeadlineType.TECHNICAL_INSPECTION, null, null, null, 2L, null, null)))
+        assertThatThrownBy(() -> service.create(
+                        1L,
+                        new DeadlineCreateRequest(DeadlineType.TECHNICAL_INSPECTION, null, null, null, 2L, null, null)))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("dueDate");
     }
@@ -113,8 +128,8 @@ class DeadlineServiceTest {
         given(householdRepository.findById(1L)).willReturn(Optional.of(household));
         given(vehicleRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(1L, new DeadlineCreateRequest(
-                        DeadlineType.OIL_CHANGE, TODAY, null, null, 99L, null, null)))
+        assertThatThrownBy(() -> service.create(
+                        1L, new DeadlineCreateRequest(DeadlineType.OIL_CHANGE, TODAY, null, null, 99L, null, null)))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("99");
     }
@@ -123,14 +138,15 @@ class DeadlineServiceTest {
     void unknownHouseholdIsNotFound() {
         given(householdRepository.findById(1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(1L, new DeadlineCreateRequest(
-                        DeadlineType.OTHER, TODAY, "x", null, null, null, null)))
+        assertThatThrownBy(() -> service.create(
+                        1L, new DeadlineCreateRequest(DeadlineType.OTHER, TODAY, "x", null, null, null, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     void completingRecurringDeadlineCreatesNextOne() {
-        Deadline tax = new Deadline(household, DeadlineType.VEHICLE_TAX, LocalDate.of(2026, 9, 15), vehicle, null, null);
+        Deadline tax =
+                new Deadline(household, DeadlineType.VEHICLE_TAX, LocalDate.of(2026, 9, 15), vehicle, null, null);
         given(deadlineRepository.findById(5L)).willReturn(Optional.of(tax));
         given(deadlineRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -145,12 +161,14 @@ class DeadlineServiceTest {
     @Test
     void explicitNextDueDateCreatesFollowUpEvenForNonRecurringType() {
         HouseholdMember anna = new HouseholdMember(household, "Anna", null);
-        Deadline licence = new Deadline(household, DeadlineType.DRIVING_LICENCE, LocalDate.of(2026, 11, 20), null, anna, null);
+        Deadline licence =
+                new Deadline(household, DeadlineType.DRIVING_LICENCE, LocalDate.of(2026, 11, 20), null, anna, null);
         licence.describe("Anna jogosítványa lejár", null);
         given(deadlineRepository.findById(6L)).willReturn(Optional.of(licence));
         given(deadlineRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
-        CompleteDeadlineResponse response = service.complete(6L, new CompleteDeadlineRequest(LocalDate.of(2036, 11, 20)));
+        CompleteDeadlineResponse response =
+                service.complete(6L, new CompleteDeadlineRequest(LocalDate.of(2036, 11, 20)));
 
         assertThat(response.next().dueDate()).isEqualTo(LocalDate.of(2036, 11, 20));
         assertThat(response.next().title()).isEqualTo("Anna jogosítványa lejár");
@@ -179,19 +197,23 @@ class DeadlineServiceTest {
 
     @Test
     void upcomingLooksAheadFromToday() {
-        given(deadlineRepository.findOpenDueUntil(1L, LocalDate.of(2026, 11, 4))).willReturn(List.of(
-                new Deadline(household, DeadlineType.OIL_CHANGE, LocalDate.of(2026, 10, 20), vehicle, null, null)));
+        given(deadlineRepository.findOpenDueUntil(1L, LocalDate.of(2026, 11, 4)))
+                .willReturn(List.of(new Deadline(
+                        household, DeadlineType.OIL_CHANGE, LocalDate.of(2026, 10, 20), vehicle, null, null)));
 
         List<DeadlineResponse> upcoming = service.upcoming(1L, 7);
 
-        assertThat(upcoming).singleElement()
-                .satisfies(deadline -> assertThat(deadline.daysUntilDue()).as("lejárt").isEqualTo(-8));
+        assertThat(upcoming)
+                .singleElement()
+                .satisfies(deadline ->
+                        assertThat(deadline.daysUntilDue()).as("lejárt").isEqualTo(-8));
     }
 
     @Test
     void searchRejectsInvertedDateRange() {
 
-        assertThatThrownBy(() -> service.search(1L, null, null, LocalDate.of(2027, 1, 1), LocalDate.of(2026, 1, 1), null))
+        assertThatThrownBy(
+                        () -> service.search(1L, null, null, LocalDate.of(2027, 1, 1), LocalDate.of(2026, 1, 1), null))
                 .isInstanceOf(BusinessRuleException.class);
     }
 }

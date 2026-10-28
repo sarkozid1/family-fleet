@@ -8,13 +8,12 @@ import hu.familyfleet.insurance.PolicyType;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleCreatedEvent;
 import hu.familyfleet.vehicle.VehicleRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
 /**
  * Határidők automatikus létrehozása (ADR-0002): jármű- és kötvényeseményekre, alapértelmezett
@@ -37,23 +36,26 @@ public class DeadlineGenerator {
         if (!event.generateTaxDeadline()) {
             return;
         }
-        Vehicle vehicle = vehicleRepository.findById(event.vehicleId())
+        Vehicle vehicle = vehicleRepository
+                .findById(event.vehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Jármű", event.vehicleId()));
-        deadlineRepository.save(build(DeadlineType.VEHICLE_TAX, vehicle, null,
-                DeadlineCalendar.nextVehicleTaxDate(today())));
+        deadlineRepository.save(
+                build(DeadlineType.VEHICLE_TAX, vehicle, null, DeadlineCalendar.nextVehicleTaxDate(today())));
     }
 
     @EventListener
     void onPolicyCreated(PolicyCreatedEvent event) {
-        InsurancePolicy policy = policyRepository.findById(event.policyId())
+        InsurancePolicy policy = policyRepository
+                .findById(event.policyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kötvény", event.policyId()));
         LocalDate today = today();
         if (policy.getPolicyType() == PolicyType.KGFB) {
             DeadlineRecurrence.withinPolicy(policy, DeadlineCalendar.nextAnniversary(policy.getStartDate(), today))
-                    .ifPresent(anniversary -> deadlineRepository.save(
-                            build(DeadlineType.KGFB_ANNIVERSARY, null, policy, anniversary)));
+                    .ifPresent(anniversary ->
+                            deadlineRepository.save(build(DeadlineType.KGFB_ANNIVERSARY, null, policy, anniversary)));
         }
-        DeadlineRecurrence.withinPolicy(policy,
+        DeadlineRecurrence.withinPolicy(
+                        policy,
                         DeadlineCalendar.nextPaymentDate(policy.getStartDate(), policy.getPaymentFrequency(), today))
                 .ifPresent(due -> deadlineRepository.save(build(DeadlineType.INSURANCE_PAYMENT, null, policy, due)));
     }
@@ -64,10 +66,11 @@ public class DeadlineGenerator {
         return switch (type) {
             case VEHICLE_TAX -> Optional.of(DeadlineCalendar.nextVehicleTaxDate(today));
             case MOTORWAY_VIGNETTE -> Optional.of(DeadlineCalendar.vignetteExpiry(today));
-            case KGFB_ANNIVERSARY -> Optional.ofNullable(policy)
-                    .map(p -> DeadlineCalendar.nextAnniversary(p.getStartDate(), today));
-            case INSURANCE_PAYMENT -> Optional.ofNullable(policy)
-                    .map(p -> DeadlineCalendar.nextPaymentDate(p.getStartDate(), p.getPaymentFrequency(), today));
+            case KGFB_ANNIVERSARY ->
+                Optional.ofNullable(policy).map(p -> DeadlineCalendar.nextAnniversary(p.getStartDate(), today));
+            case INSURANCE_PAYMENT ->
+                Optional.ofNullable(policy)
+                        .map(p -> DeadlineCalendar.nextPaymentDate(p.getStartDate(), p.getPaymentFrequency(), today));
             default -> Optional.empty();
         };
     }
@@ -77,8 +80,13 @@ public class DeadlineGenerator {
      * felmondási dátuma évente más), egyébként átveszi az előző címét és megjegyzését.
      */
     public Deadline nextOccurrence(Deadline completed, LocalDate nextDue) {
-        Deadline next = new Deadline(completed.getHousehold(), completed.getType(), nextDue,
-                completed.getVehicle(), completed.getMember(), completed.getPolicy());
+        Deadline next = new Deadline(
+                completed.getHousehold(),
+                completed.getType(),
+                nextDue,
+                completed.getVehicle(),
+                completed.getMember(),
+                completed.getPolicy());
         GeneratedText text = generatedText(completed.getType(), completed.getVehicle(), completed.getPolicy(), nextDue);
         if (text != null) {
             next.describe(text.title(), text.note());
@@ -92,17 +100,23 @@ public class DeadlineGenerator {
     public GeneratedText generatedText(DeadlineType type, Vehicle vehicle, InsurancePolicy policy, LocalDate due) {
         return switch (type) {
             case VEHICLE_TAX -> new GeneratedText("Gépjárműadó – " + plate(vehicle, policy), null);
-            case MOTORWAY_VIGNETTE -> new GeneratedText("Éves autópálya-matrica lejár – " + plate(vehicle, policy), null);
+            case MOTORWAY_VIGNETTE ->
+                new GeneratedText("Éves autópálya-matrica lejár – " + plate(vehicle, policy), null);
             case KGFB_ANNIVERSARY -> {
                 LocalDate cancelBy = DeadlineCalendar.kgfbCancellationDeadline(due);
                 yield new GeneratedText(
                         "KGFB-évforduló – felmondási határidő: " + cancelBy,
                         "A kötvény évfordulója %s. Felmondani legalább %d nappal előtte, legkésőbb %s-ig lehet; "
-                                .formatted(due, DeadlineCalendar.KGFB_CANCELLATION_DAYS, cancelBy)
+                                        .formatted(due, DeadlineCalendar.KGFB_CANCELLATION_DAYS, cancelBy)
                                 + "felmondás nélkül a szerződés automatikusan folytatódik.");
             }
-            case INSURANCE_PAYMENT -> new GeneratedText("Biztosítási díj – %s (%s)"
-                    .formatted(policy.getPolicyType(), policy.getPaymentFrequency().displayName()), null);
+            case INSURANCE_PAYMENT ->
+                new GeneratedText(
+                        "Biztosítási díj – %s (%s)"
+                                .formatted(
+                                        policy.getPolicyType(),
+                                        policy.getPaymentFrequency().displayName()),
+                        null);
             default -> null;
         };
     }

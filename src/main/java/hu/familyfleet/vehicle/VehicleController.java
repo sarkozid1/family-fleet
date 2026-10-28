@@ -6,14 +6,13 @@ import hu.familyfleet.vehicle.dto.VehicleResponse;
 import hu.familyfleet.vehicle.dto.VehicleUpdateRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
 
 @Tag(name = "Járművek", description = "Járművek háztartásonként, optimista zárolással")
 @RestController

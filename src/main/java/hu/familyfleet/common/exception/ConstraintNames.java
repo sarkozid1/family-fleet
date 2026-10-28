@@ -1,11 +1,10 @@
 package hu.familyfleet.common.exception;
 
-import org.hibernate.exception.ConstraintViolationException;
-
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.hibernate.exception.ConstraintViolationException;
 
 /** A megsértett adatbázis-megkötés nevének kinyerése egy kivételláncból. */
 public final class ConstraintNames {

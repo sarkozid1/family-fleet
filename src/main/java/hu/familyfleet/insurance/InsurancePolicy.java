@@ -5,14 +5,13 @@ import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.common.exception.ConflictException;
 import hu.familyfleet.vehicle.Vehicle;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "insurance_policy")
@@ -51,15 +50,25 @@ public class InsurancePolicy extends AuditableEntity {
     @Column(nullable = false, length = 20)
     private PaymentFrequency paymentFrequency;
 
-    public InsurancePolicy(Vehicle vehicle, Insurer insurer, PolicyType policyType,
-                           LocalDate startDate, BigDecimal annualPremium,
-                           PaymentFrequency paymentFrequency) {
+    public InsurancePolicy(
+            Vehicle vehicle,
+            Insurer insurer,
+            PolicyType policyType,
+            LocalDate startDate,
+            BigDecimal annualPremium,
+            PaymentFrequency paymentFrequency) {
         this(vehicle, insurer, policyType, null, startDate, null, annualPremium, paymentFrequency);
     }
 
-    public InsurancePolicy(Vehicle vehicle, Insurer insurer, PolicyType policyType, String policyNumber,
-                           LocalDate startDate, LocalDate endDate, BigDecimal annualPremium,
-                           PaymentFrequency paymentFrequency) {
+    public InsurancePolicy(
+            Vehicle vehicle,
+            Insurer insurer,
+            PolicyType policyType,
+            String policyNumber,
+            LocalDate startDate,
+            LocalDate endDate,
+            BigDecimal annualPremium,
+            PaymentFrequency paymentFrequency) {
         this.vehicle = Objects.requireNonNull(vehicle, "vehicle");
         this.policyType = Objects.requireNonNull(policyType, "policyType");
         changeTerms(insurer, policyNumber, startDate, endDate, annualPremium, paymentFrequency);
@@ -69,8 +78,13 @@ public class InsurancePolicy extends AuditableEntity {
      * A kötvény feltételeinek módosítása. A típus (KGFB/CASCO) és a jármű nem változhat: az már
      * egy másik kötvény lenne.
      */
-    public void changeTerms(Insurer insurer, String policyNumber, LocalDate startDate, LocalDate endDate,
-                            BigDecimal annualPremium, PaymentFrequency paymentFrequency) {
+    public void changeTerms(
+            Insurer insurer,
+            String policyNumber,
+            LocalDate startDate,
+            LocalDate endDate,
+            BigDecimal annualPremium,
+            PaymentFrequency paymentFrequency) {
         Objects.requireNonNull(startDate, "startDate");
         if (endDate != null && !endDate.isAfter(startDate)) {
             throw new BusinessRuleException(
@@ -115,7 +129,9 @@ public class InsurancePolicy extends AuditableEntity {
                 .ifPresent(other -> {
                     throw new ConflictException(
                             "A járműnek már van érvényes KGFB-kötvénye ebben az időszakban (kötvény id: %d, %s – %s)."
-                                    .formatted(other.getId(), other.getStartDate(),
+                                    .formatted(
+                                            other.getId(),
+                                            other.getStartDate(),
                                             other.getEndDate() == null ? "határozatlan" : other.getEndDate()));
                 });
     }

@@ -33,12 +33,15 @@ public class VehicleService {
     @Transactional
     public VehicleResponse create(Long householdId, VehicleCreateRequest request) {
         accessGuard.requireHousehold(householdId);
-        Household household = householdRepository.findById(householdId)
+        Household household = householdRepository
+                .findById(householdId)
                 .orElseThrow(() -> new ResourceNotFoundException("Háztartás", householdId));
         ensurePlateIsFree(householdId, request.licensePlate(), null);
 
-        Vehicle vehicle = new Vehicle(household, request.type(), request.brand(), request.model(), request.licensePlate());
-        vehicle.updateDetails(request.type(), request.brand(), request.model(), request.vin(), request.productionYear());
+        Vehicle vehicle =
+                new Vehicle(household, request.type(), request.brand(), request.model(), request.licensePlate());
+        vehicle.updateDetails(
+                request.type(), request.brand(), request.model(), request.vin(), request.productionYear());
         if (request.currentMileage() != null) {
             vehicle.updateMileage(request.currentMileage());
         }
@@ -69,7 +72,8 @@ public class VehicleService {
         Long householdId = vehicle.getHousehold().getId();
         ensurePlateIsFree(householdId, request.licensePlate(), id);
 
-        vehicle.updateDetails(request.type(), request.brand(), request.model(), request.vin(), request.productionYear());
+        vehicle.updateDetails(
+                request.type(), request.brand(), request.model(), request.vin(), request.productionYear());
         vehicle.changeLicensePlate(request.licensePlate());
         vehicle.updateMileage(request.currentMileage());
         vehicle.assignOwner(findOwner(householdId, request.ownerId()));
@@ -118,7 +122,8 @@ public class VehicleService {
         if (ownerId == null) {
             return null;
         }
-        return memberRepository.findByIdAndHouseholdId(ownerId, householdId)
+        return memberRepository
+                .findByIdAndHouseholdId(ownerId, householdId)
                 .orElseThrow(() -> new BusinessRuleException(
                         "A tulajdonos (id: %d) nem tagja a jármű háztartásának.".formatted(ownerId)));
     }

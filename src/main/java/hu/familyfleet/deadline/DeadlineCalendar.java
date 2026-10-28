@@ -1,7 +1,6 @@
 package hu.familyfleet.deadline;
 
 import hu.familyfleet.insurance.PaymentFrequency;
-
 import java.time.LocalDate;
 import java.time.MonthDay;
 import java.time.temporal.ChronoUnit;

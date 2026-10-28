@@ -1,5 +1,7 @@
 package hu.familyfleet.reminder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
 import hu.familyfleet.deadline.Deadline;
@@ -12,6 +14,13 @@ import hu.familyfleet.household.HouseholdRepository;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleRepository;
 import hu.familyfleet.vehicle.VehicleType;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,16 +35,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Valódi levélküldés egy Mailpit SMTP-szerverre (ugyanaz az image, mint a compose.yaml-ben), majd
@@ -70,14 +69,19 @@ class ReminderMailIntegrationTest {
 
     @Autowired
     private ReminderService reminderService;
+
     @Autowired
     private HouseholdRepository householdRepository;
+
     @Autowired
     private HouseholdMemberRepository memberRepository;
+
     @Autowired
     private VehicleRepository vehicleRepository;
+
     @Autowired
     private DeadlineRepository deadlineRepository;
+
     @Autowired
     private ReminderLogRepository reminderLogRepository;
 
@@ -99,12 +103,16 @@ class ReminderMailIntegrationTest {
         ReminderService.RunResult second = reminderService.sendDailyReminders();
 
         assertThat(first.sent()).isGreaterThanOrEqualTo(1);
-        assertThat(second.sent()).as("ugyanarra a napra senki nem kap második levelet").isZero();
-        assertThat(reminderLogRepository.existsByHouseholdIdAndReminderDate(household.getId(), TODAY)).isTrue();
+        assertThat(second.sent())
+                .as("ugyanarra a napra senki nem kap második levelet")
+                .isZero();
+        assertThat(reminderLogRepository.existsByHouseholdIdAndReminderDate(household.getId(), TODAY))
+                .isTrue();
 
         String messages = mailpit().get().uri("/api/v1/messages").retrieve().body(String.class);
         List<Map<String, Object>> ours = JsonPath.<List<Map<String, Object>>>read(messages, "$.messages").stream()
-                .filter(message -> JsonPath.<List<String>>read(message, "$.To[*].Address").contains(anna))
+                .filter(message ->
+                        JsonPath.<List<String>>read(message, "$.To[*].Address").contains(anna))
                 .toList();
         assertThat(ours).as("pontosan egy levél ennek a háztartásnak").hasSize(1);
         Map<String, Object> message = ours.getFirst();
@@ -113,7 +121,8 @@ class ReminderMailIntegrationTest {
         assertThat(recipients).containsExactlyInAnyOrder(anna, bence);
 
         String id = (String) message.get("ID");
-        String text = JsonPath.read(mailpit().get().uri("/api/v1/message/{id}", id).retrieve().body(String.class), "$.Text");
+        String text = JsonPath.read(
+                mailpit().get().uri("/api/v1/message/{id}", id).retrieve().body(String.class), "$.Text");
         assertThat(text)
                 .contains("2026-11-04 – Műszaki vizsga: Kovács szerviz")
                 .contains("2026-11-27 – Olajcsere")

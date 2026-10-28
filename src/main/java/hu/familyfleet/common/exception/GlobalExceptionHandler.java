@@ -1,6 +1,8 @@
 package hu.familyfleet.common.exception;
 
 import hu.familyfleet.common.logging.RequestIdFilter;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,9 +24,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * Egységes hibaválaszok RFC 9457 {@link ProblemDetail} formában.
  *
@@ -36,7 +35,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    private static final String DEFAULT_CONFLICT_MESSAGE = "A művelet ütközik a meglévő adatokkal (pl. már létező érték).";
+    private static final String DEFAULT_CONFLICT_MESSAGE =
+            "A művelet ütközik a meglévő adatokkal (pl. már létező érték).";
 
     /**
      * Az elnevezett megkötésekhez (lásd a Flyway-migrációkat) emberi üzenet tartozik. Ez csak a
@@ -59,7 +59,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         error.getDefaultMessage()))
                 .toList();
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "A kérés adatai érvénytelenek.");
+        ProblemDetail problem =
+                ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "A kérés adatai érvénytelenek.");
         problem.setTitle("Validációs hiba");
         problem.setProperty("errors", errors);
         return handleExceptionInternal(ex, problem, headers, HttpStatus.BAD_REQUEST, request);
@@ -75,7 +76,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                 result.getMethodParameter().getParameterName(), error.getDefaultMessage())))
                 .toList();
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "A kérés paraméterei érvénytelenek.");
+        ProblemDetail problem =
+                ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "A kérés paraméterei érvénytelenek.");
         problem.setTitle("Validációs hiba");
         problem.setProperty("errors", errors);
         return handleExceptionInternal(ex, problem, headers, HttpStatus.BAD_REQUEST, request);
@@ -101,7 +103,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     /** 403: be van jelentkezve, de a művelethez nincs szerepköre (pl. biztosító felvétele USER-ként). */
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
-        return problem(ex, HttpStatus.FORBIDDEN, "Nincs jogosultság", "Ehhez a művelethez nincs jogosultságod.", request);
+        return problem(
+                ex, HttpStatus.FORBIDDEN, "Nincs jogosultság", "Ehhez a művelethez nincs jogosultságod.", request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -122,8 +125,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     /** Ismeretlen rendezési mező a lapozásnál ({@code ?sort=nincsIlyen}): a kliens hibája, nem 500. */
     @ExceptionHandler(PropertyReferenceException.class)
     ResponseEntity<Object> handleUnknownProperty(PropertyReferenceException ex, WebRequest request) {
-        return problem(ex, HttpStatus.BAD_REQUEST, "Érvénytelen paraméter",
-                "Ismeretlen mező: " + ex.getPropertyName(), request);
+        return problem(
+                ex,
+                HttpStatus.BAD_REQUEST,
+                "Érvénytelen paraméter",
+                "Ismeretlen mező: " + ex.getPropertyName(),
+                request);
     }
 
     /**
@@ -143,16 +150,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(OptimisticLockingFailureException.class)
     ResponseEntity<Object> handleOptimisticLock(OptimisticLockingFailureException ex, WebRequest request) {
         log.info("Optimistic locking conflict: {}", ex.getMessage());
-        return problem(ex, HttpStatus.CONFLICT, "Párhuzamos módosítás",
-                "Az adatot időközben valaki más módosította. Töltsd le újra, és próbáld meg ismét.", request);
+        return problem(
+                ex,
+                HttpStatus.CONFLICT,
+                "Párhuzamos módosítás",
+                "Az adatot időközben valaki más módosította. Töltsd le újra, és próbáld meg ismét.",
+                request);
     }
 
     /** Végső védőháló: a kliens nem kap stack trace-t vagy belső üzenetet, a részletek a logba mennek. */
     @ExceptionHandler(Exception.class)
     ResponseEntity<Object> handleUnexpected(Exception ex, WebRequest request) {
         log.error("Unexpected error", ex);
-        return problem(ex, HttpStatus.INTERNAL_SERVER_ERROR, "Váratlan hiba",
-                "Váratlan hiba történt. Kérjük, próbáld újra később.", request);
+        return problem(
+                ex,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Váratlan hiba",
+                "Váratlan hiba történt. Kérjük, próbáld újra később.",
+                request);
     }
 
     /**

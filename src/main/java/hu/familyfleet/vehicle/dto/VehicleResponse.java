@@ -3,7 +3,6 @@ package hu.familyfleet.vehicle.dto;
 import hu.familyfleet.household.HouseholdMember;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleType;
-
 import java.time.Instant;
 
 public record VehicleResponse(

@@ -6,12 +6,11 @@ import hu.familyfleet.household.dto.HouseholdResponse;
 import hu.familyfleet.household.dto.MemberRequest;
 import hu.familyfleet.household.dto.MemberResponse;
 import hu.familyfleet.security.AppUserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Háztartások és családtagok kezelése. Alapból csak olvasó tranzakció; az író metódusok
@@ -33,7 +32,8 @@ public class HouseholdService {
     public HouseholdResponse create(HouseholdRequest request) {
         Household household = householdRepository.save(new Household(request.name()));
         // getReferenceById: nem tölti be a felhasználót, csak az idegen kulcshoz kell a proxy.
-        accessRepository.save(new HouseholdAccess(userRepository.getReferenceById(accessGuard.currentUserId()), household));
+        accessRepository.save(
+                new HouseholdAccess(userRepository.getReferenceById(accessGuard.currentUserId()), household));
         return HouseholdResponse.from(household);
     }
 
@@ -59,8 +59,7 @@ public class HouseholdService {
     @Transactional
     public MemberResponse addMember(Long householdId, MemberRequest request) {
         Household household = getHousehold(householdId);
-        HouseholdMember member = memberRepository.save(
-                new HouseholdMember(household, request.name(), request.email()));
+        HouseholdMember member = memberRepository.save(new HouseholdMember(household, request.name(), request.email()));
         return MemberResponse.from(member);
     }
 
@@ -74,14 +73,14 @@ public class HouseholdService {
 
     public MemberResponse findMember(Long householdId, Long memberId) {
         accessGuard.requireHousehold(householdId);
-        return memberRepository.findByIdAndHouseholdId(memberId, householdId)
+        return memberRepository
+                .findByIdAndHouseholdId(memberId, householdId)
                 .map(MemberResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("Családtag", memberId));
     }
 
     private Household getHousehold(Long id) {
         accessGuard.requireHousehold(id);
-        return householdRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Háztartás", id));
+        return householdRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Háztartás", id));
     }
 }
