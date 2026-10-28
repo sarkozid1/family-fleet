@@ -1,4 +1,4 @@
-﻿# Family Fleet
+# Family Fleet
 
 Családi járműnyilvántartó REST API: háztartások, családtagok, járművek, biztosítások és
 határidők (műszaki vizsga, KGFB-évforduló, gépjárműadó, autópálya-matrica stb.) egy helyen.
