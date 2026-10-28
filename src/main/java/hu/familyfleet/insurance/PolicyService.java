@@ -2,6 +2,7 @@ package hu.familyfleet.insurance;
 
 import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.common.exception.ResourceNotFoundException;
+import hu.familyfleet.household.HouseholdAccessGuard;
 import hu.familyfleet.insurance.dto.PolicyCreateRequest;
 import hu.familyfleet.insurance.dto.PolicyResponse;
 import hu.familyfleet.insurance.dto.PolicyUpdateRequest;
@@ -27,11 +28,11 @@ public class PolicyService {
     private final VehicleRepository vehicleRepository;
     private final Clock clock;
     private final ApplicationEventPublisher eventPublisher;
+    private final HouseholdAccessGuard accessGuard;
 
     @Transactional
     public PolicyResponse create(Long vehicleId, PolicyCreateRequest request) {
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Jármű", vehicleId));
+        Vehicle vehicle = getVehicle(vehicleId);
         InsurancePolicy policy = new InsurancePolicy(vehicle, findInsurer(request.insurerId()), request.policyType(),
                 request.policyNumber(), request.startDate(), request.endDate(), request.annualPremium(),
                 request.paymentFrequency());
@@ -43,9 +44,7 @@ public class PolicyService {
     }
 
     public List<PolicyResponse> findByVehicle(Long vehicleId) {
-        if (!vehicleRepository.existsById(vehicleId)) {
-            throw new ResourceNotFoundException("Jármű", vehicleId);
-        }
+        getVehicle(vehicleId);
         LocalDate today = today();
         return policyRepository.findByVehicleIdOrderByStartDateDesc(vehicleId).stream()
                 .map(policy -> PolicyResponse.from(policy, today))
@@ -75,8 +74,18 @@ public class PolicyService {
     }
 
     private InsurancePolicy getPolicy(Long id) {
-        return policyRepository.findWithInsurerById(id)
+        InsurancePolicy policy = policyRepository.findWithInsurerById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kötvény", id));
+        accessGuard.requireAccess(policy.getVehicle().getHousehold().getId(), "Kötvény", id);
+        return policy;
+    }
+
+    /** Idegen háztartás járműve ugyanúgy "nem található", mint a nem létező (ADR-0003). */
+    private Vehicle getVehicle(Long vehicleId) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Jármű", vehicleId));
+        accessGuard.requireAccess(vehicle.getHousehold().getId(), "Jármű", vehicleId);
+        return vehicle;
     }
 
     /** A kérés törzsében hivatkozott, nem létező biztosító a kérés hibája (400), nem hiányzó URL-erőforrás (404). */

@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -76,6 +79,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Validációs hiba");
         problem.setProperty("errors", errors);
         return handleExceptionInternal(ex, problem, headers, HttpStatus.BAD_REQUEST, request);
+    }
+
+    /**
+     * 401: hiányzó, lejárt vagy hibás token, illetve rossz e-mail/jelszó. A részletes ok (pl. "lejárt
+     * aláírás") csak a logba kerül; a {@code WWW-Authenticate} fejléc jelzi a kliensnek a sémát.
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    ResponseEntity<Object> handleAuthentication(AuthenticationException ex, WebRequest request) {
+        log.debug("Authentication failed: {}", ex.getMessage());
+        String detail = ex instanceof BadCredentialsException
+                ? "Hibás e-mail-cím vagy jelszó."
+                : "A kéréshez érvényes hozzáférési token szükséges (Authorization: Bearer ...).";
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, detail);
+        problem.setTitle("Hitelesítés szükséges");
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+        return handleExceptionInternal(ex, problem, headers, HttpStatus.UNAUTHORIZED, request);
+    }
+
+    /** 403: be van jelentkezve, de a művelethez nincs szerepköre (pl. biztosító felvétele USER-ként). */
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
+        return problem(ex, HttpStatus.FORBIDDEN, "Nincs jogosultság", "Ehhez a művelethez nincs jogosultságod.", request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
