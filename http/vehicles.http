@@ -1,0 +1,121 @@
+### Jármű API – IntelliJ HTTP Client
+# Előfeltétel: futó alkalmazás. Az első két kérés létrehoz egy háztartást és egy tagot.
+
+@baseUrl = http://localhost:8080
+
+### Háztartás a járművekhez
+POST {{baseUrl}}/api/households
+Content-Type: application/json
+
+{
+  "name": "Járműves család"
+}
+
+> {% client.global.set("householdId", response.body.id); %}
+
+### Családtag (tulajdonos)
+POST {{baseUrl}}/api/households/{{householdId}}/members
+Content-Type: application/json
+
+{
+  "name": "Kovács Anna",
+  "email": "anna@example.com"
+}
+
+> {% client.global.set("ownerId", response.body.id); %}
+
+### Jármű felvétele (új formátumú rendszám) -> 201 + Location
+POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Content-Type: application/json
+
+{
+  "type": "CAR",
+  "brand": "Toyota",
+  "model": "Corolla",
+  "licensePlate": "aa-bc-123",
+  "vin": "JTDBR32E720123456",
+  "productionYear": 2021,
+  "currentMileage": 45000,
+  "ownerId": {{ownerId}}
+}
+
+> {%
+    client.global.set("vehicleId", response.body.id);
+    client.global.set("vehicleVersion", response.body.version);
+%}
+
+### Második jármű (régi formátumú rendszám)
+POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Content-Type: application/json
+
+{
+  "type": "MOTORCYCLE",
+  "brand": "Honda",
+  "model": "CB500F",
+  "licensePlate": "ABC-123"
+}
+
+### Járművek listája (lapozott, alapból rendszám szerint)
+GET {{baseUrl}}/api/households/{{householdId}}/vehicles?page=0&size=10
+
+### Lista márka szerint csökkenő sorrendben
+GET {{baseUrl}}/api/households/{{householdId}}/vehicles?sort=brand,desc
+
+### Egy jármű
+GET {{baseUrl}}/api/vehicles/{{vehicleId}}
+
+### Módosítás a letöltött verzióval -> 200, a verzió nő
+PUT {{baseUrl}}/api/vehicles/{{vehicleId}}
+Content-Type: application/json
+
+{
+  "type": "CAR",
+  "brand": "Toyota",
+  "model": "Corolla Touring",
+  "licensePlate": "AA-BC-123",
+  "productionYear": 2021,
+  "currentMileage": 50000,
+  "ownerId": {{ownerId}},
+  "version": {{vehicleVersion}}
+}
+
+### HIBA: ugyanaz a régi verzió még egyszer -> 409 (optimista zárolás)
+PUT {{baseUrl}}/api/vehicles/{{vehicleId}}
+Content-Type: application/json
+
+{
+  "type": "CAR",
+  "brand": "Toyota",
+  "model": "Corolla",
+  "licensePlate": "AA-BC-123",
+  "currentMileage": 51000,
+  "version": {{vehicleVersion}}
+}
+
+### HIBA: duplikált rendszám ugyanabban a háztartásban -> 409
+POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Content-Type: application/json
+
+{
+  "type": "CAR",
+  "brand": "Opel",
+  "model": "Astra",
+  "licensePlate": "abc 123"
+}
+
+### HIBA: érvénytelen rendszám -> 400
+POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Content-Type: application/json
+
+{
+  "type": "CAR",
+  "brand": "Opel",
+  "model": "Astra",
+  "licensePlate": "AB-12"
+}
+
+### HIBA: ismeretlen rendezési mező -> 400
+GET {{baseUrl}}/api/households/{{householdId}}/vehicles?sort=nincsIlyen
+
+### Törlés -> 204 (ha nincs kötvénye és határideje; különben 409)
+DELETE {{baseUrl}}/api/vehicles/{{vehicleId}}
