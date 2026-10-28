@@ -23,6 +23,11 @@
 		<jacoco.minimum.line.coverage>0.80</jacoco.minimum.line.coverage>
 		<spotless.version>3.10.4</spotless.version>
 		<palantir-java-format.version>2.100.0</palantir-java-format.version>
+		<!-- Frontend: a Node a projektbe (frontend/node) települ, nem kell a gépre telepíteni -->
+		<frontend-maven-plugin.version>2.0.2</frontend-maven-plugin.version>
+		<node.version>v24.21.0</node.version>
+		<!-- A -DskipTests a frontend-teszteket (Vitest) is kihagyja -->
+		<skipTests>false</skipTests>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -135,6 +140,56 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<!-- React-frontend: Node telepítése a projektbe, függőségek a lock-fájlból (npm ci),
+				     típusellenőrzés + build a target/classes/static mappába, Vitest a test fázisban.
+				     Kihagyható: -Dskip.npm (pl. ha csak a backenden dolgozol). -->
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>${frontend-maven-plugin.version}</version>
+				<configuration>
+					<workingDirectory>frontend</workingDirectory>
+					<installDirectory>frontend</installDirectory>
+					<nodeVersion>${node.version}</nodeVersion>
+				</configuration>
+				<executions>
+					<execution>
+						<id>install-node-and-npm</id>
+						<goals>
+							<goal>install-node-and-npm</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>npm-ci</id>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>ci --no-audit --no-fund</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-build</id>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run build</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>test</arguments>
+							<skip>${skipTests}</skip>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

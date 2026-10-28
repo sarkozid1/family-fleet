@@ -11,9 +11,12 @@ COPY mvnw pom.xml lombok.config ./
 COPY .mvn .mvn
 RUN chmod +x mvnw
 
+COPY frontend frontend
 COPY src src
-# A Maven-repó BuildKit cache-ben marad a buildek között, nem kerül bele az image-be.
+# A Maven- és az npm-cache BuildKit cache-ben marad a buildek között, nem kerül bele az image-be.
+# A Maven a frontend-maven-pluginnal a React-felületet is felépíti (target/classes/static).
 RUN --mount=type=cache,target=/root/.m2 \
+    --mount=type=cache,target=/root/.npm \
     ./mvnw -B -ntp package -DskipTests -Djacoco.skip=true -Dspotless.check.skip=true
 
 # A Spring Boot "réteges" kibontása: függőségek, loader, saját kód külön rétegben.

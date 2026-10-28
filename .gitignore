@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend ###
+# A frontend-maven-plugin ide telepíti a Node-ot és az npm-et
+frontend/node/
+frontend/node_modules/
