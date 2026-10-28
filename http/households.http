@@ -2,10 +2,13 @@
 # Futtatás: indítsd az alkalmazást (./mvnw spring-boot:run), majd a kéréseket felülről lefelé.
 # A létrehozott azonosítókat a válaszkezelő szkriptek globális változókba mentik.
 
+# Előfeltétel: az auth.http bejelentkezése (a "token" változót tölti).
+
 @baseUrl = http://localhost:8080
 
 ### Háztartás létrehozása -> 201 + Location
 POST {{baseUrl}}/api/households
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -19,12 +22,15 @@ Content-Type: application/json
 
 ### Háztartások listája
 GET {{baseUrl}}/api/households
+Authorization: Bearer {{token}}
 
 ### Egy háztartás
 GET {{baseUrl}}/api/households/{{householdId}}
+Authorization: Bearer {{token}}
 
 ### Háztartás átnevezése
 PUT {{baseUrl}}/api/households/{{householdId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -33,6 +39,7 @@ Content-Type: application/json
 
 ### Családtag felvétele
 POST {{baseUrl}}/api/households/{{householdId}}/members
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -44,6 +51,7 @@ Content-Type: application/json
 
 ### Családtag e-mail nélkül
 POST {{baseUrl}}/api/households/{{householdId}}/members
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -52,12 +60,15 @@ Content-Type: application/json
 
 ### Tagok listája (név szerint rendezve)
 GET {{baseUrl}}/api/households/{{householdId}}/members
+Authorization: Bearer {{token}}
 
 ### Egy családtag
 GET {{baseUrl}}/api/households/{{householdId}}/members/{{memberId}}
+Authorization: Bearer {{token}}
 
 ### HIBA: üres név -> 400, mezőnkénti "errors" lista
 POST {{baseUrl}}/api/households
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -66,6 +77,7 @@ Content-Type: application/json
 
 ### HIBA: érvénytelen e-mail -> 400
 POST {{baseUrl}}/api/households/{{householdId}}/members
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -75,3 +87,4 @@ Content-Type: application/json
 
 ### HIBA: nem létező háztartás tagjai -> 404 (nem üres lista)
 GET {{baseUrl}}/api/households/999999/members
+Authorization: Bearer {{token}}

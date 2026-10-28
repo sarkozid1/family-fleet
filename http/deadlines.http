@@ -2,10 +2,13 @@
 # Teljes forgatókönyv: háztartás -> tag -> jármű (adó-határidővel) -> KGFB-kötvény (évforduló +
 # díjfizetés) -> lista, szűrés, közelgők -> teljesítés (ismétlődés) -> elvetés.
 
+# Előfeltétel: az auth.http bejelentkezése (a "token" változót tölti).
+
 @baseUrl = http://localhost:8080
 
 ### Háztartás
 POST {{baseUrl}}/api/households
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -16,6 +19,7 @@ Content-Type: application/json
 
 ### Családtag
 POST {{baseUrl}}/api/households/{{householdId}}/members
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -27,6 +31,7 @@ Content-Type: application/json
 
 ### Jármű, a következő gépjárműadó-határidővel
 POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -41,11 +46,13 @@ Content-Type: application/json
 
 ### Biztosítók (az első azonosítóját eltesszük)
 GET {{baseUrl}}/api/insurers
+Authorization: Bearer {{token}}
 
 > {% client.global.set("insurerId", response.body[0].id); %}
 
 ### KGFB-kötvény -> generál: KGFB_ANNIVERSARY + INSURANCE_PAYMENT
 POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -58,20 +65,25 @@ Content-Type: application/json
 
 ### A háztartás összes határideje (esedékesség szerint)
 GET {{baseUrl}}/api/households/{{householdId}}/deadlines
+Authorization: Bearer {{token}}
 
 ### Szűrés: nyitott díjfizetések egy dátumtartományban
 GET {{baseUrl}}/api/households/{{householdId}}/deadlines?status=OPEN&type=INSURANCE_PAYMENT&from=2026-01-01&to=2027-12-31
+Authorization: Bearer {{token}}
 
 > {% client.global.set("paymentId", response.body.content[0].id); %}
 
 ### Közelgők a következő 30 napban (a lejártakkal együtt)
 GET {{baseUrl}}/api/households/{{householdId}}/deadlines/upcoming
+Authorization: Bearer {{token}}
 
 ### Közelgők a következő 180 napban
 GET {{baseUrl}}/api/households/{{householdId}}/deadlines/upcoming?days=180
+Authorization: Bearer {{token}}
 
 ### Kézi határidő: műszaki vizsga (dátum kötelező)
 POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -85,6 +97,7 @@ Content-Type: application/json
 
 ### Matrica dátum nélkül -> a következő év január 31.
 POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -94,6 +107,7 @@ Content-Type: application/json
 
 ### Jogosítvány lejárata (családtaghoz kötött)
 POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -105,18 +119,23 @@ Content-Type: application/json
 
 ### Díjfizetés teljesítése -> létrejön a következő negyedéves fizetés
 POST {{baseUrl}}/api/deadlines/{{paymentId}}/complete
+Authorization: Bearer {{token}}
 
 ### Műszaki vizsga teljesítése: a következő 2 év múlva, a teljesítés napjától
 POST {{baseUrl}}/api/deadlines/{{inspectionId}}/complete
+Authorization: Bearer {{token}}
 
 ### Egy határidő
 GET {{baseUrl}}/api/deadlines/{{paymentId}}
+Authorization: Bearer {{token}}
 
 ### HIBA: már teljesített határidő újra -> 409
 POST {{baseUrl}}/api/deadlines/{{paymentId}}/complete
+Authorization: Bearer {{token}}
 
 ### Kézi határidő, amit elvetünk
 POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -129,9 +148,11 @@ Content-Type: application/json
 
 ### Elvetés
 POST {{baseUrl}}/api/deadlines/{{otherId}}/dismiss
+Authorization: Bearer {{token}}
 
 ### HIBA: kötelező kapcsolat hiányzik -> 400
 POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -141,3 +162,4 @@ Content-Type: application/json
 
 ### HIBA: days tartományon kívül -> 400
 GET {{baseUrl}}/api/households/{{householdId}}/deadlines/upcoming?days=0
+Authorization: Bearer {{token}}
