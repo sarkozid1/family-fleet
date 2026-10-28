@@ -4,6 +4,7 @@ import hu.familyfleet.household.dto.HouseholdRequest;
 import hu.familyfleet.household.dto.HouseholdResponse;
 import hu.familyfleet.household.dto.MemberRequest;
 import hu.familyfleet.household.dto.MemberResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Háztartások", description = "Háztartások és családtagok")
 @RestController
 @RequestMapping("/api/households")
 @RequiredArgsConstructor

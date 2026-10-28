@@ -4,6 +4,7 @@ import hu.familyfleet.common.web.PageResponse;
 import hu.familyfleet.vehicle.dto.VehicleCreateRequest;
 import hu.familyfleet.vehicle.dto.VehicleResponse;
 import hu.familyfleet.vehicle.dto.VehicleUpdateRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+@Tag(name = "Járművek", description = "Járművek háztartásonként, optimista zárolással")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor

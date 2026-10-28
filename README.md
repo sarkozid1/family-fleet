@@ -35,7 +35,29 @@ webes felületen nézhetők meg, valódi címzetthez nem jutnak el.
 
 Kipróbálható kérések az [`http/`](http) mappában vannak (IntelliJ HTTP Client formátum, a
 VS Code REST Client bővítménye is nagyrészt érti). A hibák egységesen RFC 9457
-`application/problem+json` formában érkeznek.
+`application/problem+json` formában érkeznek, benne a `requestId`-vel, amely a válasz
+`X-Request-Id` fejlécében és minden hozzá tartozó logsorban is szerepel.
+
+| Cím | Mi ez |
+|---|---|
+| `http://localhost:8080/swagger-ui.html` | Swagger UI, interaktív API-dokumentáció |
+| `http://localhost:8080/v3/api-docs` | OpenAPI-leírás (JSON) |
+| `http://localhost:8080/actuator/health` | Állapot (plusz `/liveness` és `/readiness`) |
+| `http://localhost:8080/actuator/info` | Verzió, build ideje, Java-verzió |
+| `http://localhost:8025` | Mailpit: az elküldött levelek |
+
+## Profilok és konfiguráció
+
+| Profil | Mikor | Jellemzők |
+|---|---|---|
+| `dev` | alapértelmezett, ha nincs megadva profil | Docker Compose indítja a Postgrest és a Mailpitet, SQL-logolás, több Actuator-végpont |
+| `prod` | élesben: `SPRING_PROFILES_ACTIVE=prod` | JSON (ECS) logok, csak `health` és `info`, Swagger alapból kikapcsolva, minden titok környezeti változóból |
+
+A `prod` profil kötelező környezeti változói (alapérték nélkül, hiányukban az alkalmazás nem indul):
+`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `MAIL_HOST`, `REMINDER_FROM`.
+Opcionálisak: `MAIL_PORT` (587), `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SMTP_AUTH`,
+`MAIL_SMTP_STARTTLS`, `REMINDER_ENABLED`, `REMINDER_CRON`, `API_DOCS_ENABLED` (false).
+A teljes lista az [`application-prod.yml`](src/main/resources/application-prod.yml) fejlécében.
 
 ## Tesztek
 
@@ -60,6 +82,7 @@ Windows alatt a `./mvnw` helyett `.\mvnw.cmd` kell.
 - Spring Web MVC, Spring Data JPA (Hibernate), Bean Validation
 - PostgreSQL 18, Flyway (sémamigrációk)
 - Spring Mail + ütemezett feladat (`@Scheduled`), Mailpit fejlesztői SMTP
+- Spring Boot Actuator, strukturált (ECS) logolás, springdoc-openapi (Swagger UI)
 - Lombok
 - Tesztek: JUnit 5, AssertJ, Mockito, Testcontainers 2
 
@@ -67,16 +90,17 @@ Windows alatt a `./mvnw` helyett `.\mvnw.cmd` kell.
 
 ```text
 src/main/java/hu/familyfleet
-├── common/      közös osztályok (pl. AuditableEntity)
+├── common/      közös: hibakezelés, lapozás, Clock, kérésazonosító, OpenAPI
 ├── household/   háztartás és családtagok
 ├── vehicle/     járművek
 ├── insurance/   biztosítók és kötvények
-└── deadline/    határidők
+├── deadline/    határidők, generálási és ismétlődési szabályok
+└── reminder/    napi emlékeztető e-mail
 src/main/resources/db/migration   Flyway-migrációk (V1, V2, ...)
 ```
 
-A csomagolás funkció (feature) szerinti: minden csomag a saját entitásait, repository-jait és
-később a service- és controller-osztályait tartalmazza.
+A csomagolás funkció (feature) szerinti: minden csomag a saját entitásait, repository-jait,
+service- és controller-osztályait tartalmazza.
 
 ## Dokumentáció
 

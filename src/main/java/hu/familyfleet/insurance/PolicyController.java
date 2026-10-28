@@ -3,6 +3,7 @@ package hu.familyfleet.insurance;
 import hu.familyfleet.insurance.dto.PolicyCreateRequest;
 import hu.familyfleet.insurance.dto.PolicyResponse;
 import hu.familyfleet.insurance.dto.PolicyUpdateRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Kötvények", description = "KGFB- és CASCO-kötvények járművenként")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor

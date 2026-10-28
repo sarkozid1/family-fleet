@@ -1,0 +1,52 @@
+# =========================================================
+# Éles környezet. Minden titok és környezetfüggő érték környezeti változóból jön; a
+# kötelezőknek szándékosan nincs alapértéke, így hiányuk esetén az alkalmazás el sem indul.
+#
+# Kötelező:  DB_URL, DB_USERNAME, DB_PASSWORD, MAIL_HOST, REMINDER_FROM
+# Opcionális: MAIL_PORT (587), MAIL_USERNAME, MAIL_PASSWORD, MAIL_SMTP_AUTH (true),
+#             MAIL_SMTP_STARTTLS (true), REMINDER_CRON, REMINDER_ENABLED (true),
+#             API_DOCS_ENABLED (false)
+# =========================================================
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
+
+app:
+  reminder:
+    enabled: ${REMINDER_ENABLED:true}
+    cron: ${REMINDER_CRON:0 0 7 * * *}
+    from: ${REMINDER_FROM}
+
+logging:
+  structured:
+    format:
+      # JSON-logok (Elastic Common Schema): a logkezelő (ELK, Loki, CloudWatch) mezőnként kereshet,
+      # az MDC-ben lévő requestId külön mezőként kerül bele.
+      console: ecs
+  level:
+    root: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:false}
