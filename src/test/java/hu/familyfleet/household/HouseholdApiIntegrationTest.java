@@ -1,10 +1,12 @@
 package hu.familyfleet.household;
 
 import hu.familyfleet.TestcontainersConfiguration;
+import hu.familyfleet.support.TestAuth;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.web.context.WebApplicationContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,12 +21,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * az ütközések elkerülésére minden teszt saját háztartást hoz létre.
  */
 @SpringBootTest
-@AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class HouseholdApiIntegrationTest {
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void authenticate() {
+        mockMvc = TestAuth.mockMvcAsNewUser(context);
+    }
 
     @Test
     void householdAndMemberLifecycle() throws Exception {

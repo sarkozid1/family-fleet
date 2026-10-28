@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -44,8 +45,9 @@ class OperationsIntegrationTest {
 
     @Test
     void onlyHealthAndInfoAreExposedByDefault() throws Exception {
-        mockMvc.perform(get("/actuator/metrics")).andExpect(status().isNotFound());
-        mockMvc.perform(get("/actuator/env")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/actuator/metrics")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/actuator/metrics").with(jwt())).andExpect(status().isNotFound());
+        mockMvc.perform(get("/actuator/env").with(jwt())).andExpect(status().isNotFound());
     }
 
     @Test
@@ -61,8 +63,9 @@ class OperationsIntegrationTest {
 
     @Test
     void everyResponseCarriesRequestIdAndProblemDetailRepeatsIt() throws Exception {
+        // Token nélkül: a 401-es választ már a biztonsági lánc adja, a requestId ott is benne van.
         MvcResult result = mockMvc.perform(get("/api/households/{id}", Long.MAX_VALUE))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isUnauthorized())
                 .andExpect(header().exists(RequestIdFilter.HEADER))
                 .andReturn();
 

@@ -2,11 +2,13 @@ package hu.familyfleet.deadline;
 
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
+import hu.familyfleet.support.TestAuth;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.web.context.WebApplicationContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
@@ -28,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * ellenőrizhetők. A {@code @Primary} óra felülírja az alkalmazás rendszerórás {@code Clock} beanjét.
  */
 @SpringBootTest
-@AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class DeadlineApiIntegrationTest {
 
@@ -42,7 +43,14 @@ class DeadlineApiIntegrationTest {
     }
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void authenticate() {
+        mockMvc = TestAuth.mockMvcAsNewUser(context);
+    }
 
     @Test
     void vehicleAndKgfbPolicyGenerateDeadlinesThatRecurOnCompletion() throws Exception {

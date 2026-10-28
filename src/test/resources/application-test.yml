@@ -1,0 +1,5 @@
+# A tesztek "test" profillal futnak (lásd surefire a pom.xml-ben). Csak a tesztekhez szükséges értékek.
+app:
+  security:
+    jwt:
+      secret: test-only-secret-0123456789abcdefghijklmnop
