@@ -1,10 +1,17 @@
 package hu.familyfleet.deadline;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
 import hu.familyfleet.support.TestAuth;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.web.context.WebApplicationContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,15 +22,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
-
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.web.context.WebApplicationContext;
 
 /**
  * Végponttól végpontig, rögzített "mai nappal" (2026-10-28): a generált dátumok így pontosan
@@ -63,8 +62,13 @@ class DeadlineApiIntegrationTest {
                   "licensePlate": "HAT-001", "generateTaxDeadline": true
                 }
                 """);
-        long insurerId = ((Number) JsonPath.read(mockMvc.perform(get("/api/insurers"))
-                .andReturn().getResponse().getContentAsString(), "$[0].id")).longValue();
+        long insurerId = ((Number) JsonPath.read(
+                        mockMvc.perform(get("/api/insurers"))
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString(),
+                        "$[0].id"))
+                .longValue();
         create("/api/vehicles/" + vehicleId + "/policies", """
                 {
                   "insurerId": %d, "policyType": "KGFB", "startDate": "2026-03-01",
@@ -75,8 +79,8 @@ class DeadlineApiIntegrationTest {
         // Generált határidők: adó (jármű felvételekor), díjfizetés és KGFB-évforduló (kötvény létrehozásakor).
         mockMvc.perform(get("/api/households/{id}/deadlines", householdId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[*].type",
-                        contains("INSURANCE_PAYMENT", "KGFB_ANNIVERSARY", "VEHICLE_TAX")))
+                .andExpect(
+                        jsonPath("$.content[*].type", contains("INSURANCE_PAYMENT", "KGFB_ANNIVERSARY", "VEHICLE_TAX")))
                 .andExpect(jsonPath("$.content[*].dueDate", contains("2026-12-01", "2027-03-01", "2027-03-15")))
                 .andExpect(jsonPath("$.content[1].title").value("KGFB-évforduló – felmondási határidő: 2027-01-30"))
                 .andExpect(jsonPath("$.content[1].vehicleId").value(vehicleId));
@@ -84,9 +88,14 @@ class DeadlineApiIntegrationTest {
         mockMvc.perform(get("/api/households/{id}/deadlines", householdId).param("type", "KGFB_ANNIVERSARY"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
-        long paymentId = ((Number) JsonPath.read(mockMvc.perform(get("/api/households/{id}/deadlines", householdId)
-                        .param("type", "INSURANCE_PAYMENT"))
-                .andReturn().getResponse().getContentAsString(), "$.content[0].id")).longValue();
+        long paymentId = ((Number) JsonPath.read(
+                        mockMvc.perform(get("/api/households/{id}/deadlines", householdId)
+                                        .param("type", "INSURANCE_PAYMENT"))
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString(),
+                        "$.content[0].id"))
+                .longValue();
 
         mockMvc.perform(post("/api/deadlines/{id}/complete", paymentId))
                 .andExpect(status().isOk())
@@ -106,18 +115,20 @@ class DeadlineApiIntegrationTest {
         long vehicleId = create("/api/households/" + householdId + "/vehicles", """
                 { "type": "CAR", "brand": "Opel", "model": "Astra", "licensePlate": "KOZ-001" }
                 """);
-        createDeadline(householdId, "OIL_CHANGE", "2026-10-01", vehicleId);        // lejárt
+        createDeadline(householdId, "OIL_CHANGE", "2026-10-01", vehicleId); // lejárt
         createDeadline(householdId, "TECHNICAL_INSPECTION", "2026-11-04", vehicleId); // 7 nap múlva
-        createDeadline(householdId, "TIRE_CHANGE", "2026-11-30", vehicleId);        // 33 nap múlva
+        createDeadline(householdId, "TIRE_CHANGE", "2026-11-30", vehicleId); // 33 nap múlva
 
-        mockMvc.perform(get("/api/households/{id}/deadlines/upcoming", householdId).param("days", "7"))
+        mockMvc.perform(get("/api/households/{id}/deadlines/upcoming", householdId)
+                        .param("days", "7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].type", contains("OIL_CHANGE", "TECHNICAL_INSPECTION")))
                 .andExpect(jsonPath("$[0].daysUntilDue").value(-27));
 
         mockMvc.perform(get("/api/households/{id}/deadlines/upcoming", householdId))
                 .andExpect(jsonPath("$.length()").value(2));
-        mockMvc.perform(get("/api/households/{id}/deadlines/upcoming", householdId).param("days", "40"))
+        mockMvc.perform(get("/api/households/{id}/deadlines/upcoming", householdId)
+                        .param("days", "40"))
                 .andExpect(jsonPath("$.length()").value(3));
     }
 
@@ -177,7 +188,8 @@ class DeadlineApiIntegrationTest {
     }
 
     private long create(String url, String json) throws Exception {
-        MvcResult result = mockMvc.perform(post(url).contentType(MediaType.APPLICATION_JSON).content(json))
+        MvcResult result = mockMvc.perform(
+                        post(url).contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isCreated())
                 .andReturn();
         Number id = JsonPath.read(result.getResponse().getContentAsString(), "$.id");

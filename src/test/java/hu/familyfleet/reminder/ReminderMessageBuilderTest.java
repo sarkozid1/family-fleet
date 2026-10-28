@@ -1,16 +1,15 @@
 package hu.familyfleet.reminder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import hu.familyfleet.deadline.Deadline;
 import hu.familyfleet.deadline.DeadlineType;
 import hu.familyfleet.household.Household;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleType;
-import org.junit.jupiter.api.Test;
-
 import java.time.LocalDate;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class ReminderMessageBuilderTest {
 

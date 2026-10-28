@@ -1,11 +1,16 @@
 package hu.familyfleet.insurance;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
 import hu.familyfleet.security.Role;
 import hu.familyfleet.support.TestAuth;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.web.context.WebApplicationContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,13 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.util.UUID;
-
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
@@ -75,7 +74,9 @@ class PolicyApiIntegrationTest {
                         .content(policyJson(insurerId, "KGFB", "2026-01-01", null)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.version").value(0))
-                .andReturn().getResponse().getHeader("Location");
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
 
         // Második, átfedő KGFB: a domain-szabály 409-cel elutasítja.
         mockMvc.perform(post("/api/vehicles/{id}/policies", vehicleId)
@@ -91,9 +92,7 @@ class PolicyApiIntegrationTest {
                 .andExpect(status().isCreated());
 
         // Az első KGFB lezárása után az új, aznap induló KGFB már nem ütközik.
-        mockMvc.perform(put(firstUrl)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+        mockMvc.perform(put(firstUrl).contentType(MediaType.APPLICATION_JSON).content("""
                                 {
                                   "insurerId": %d, "startDate": "2026-01-01", "endDate": "2026-09-01",
                                   "annualPremium": 52000, "paymentFrequency": "QUARTERLY", "version": 0

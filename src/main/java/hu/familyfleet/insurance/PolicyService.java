@@ -8,15 +8,14 @@ import hu.familyfleet.insurance.dto.PolicyResponse;
 import hu.familyfleet.insurance.dto.PolicyUpdateRequest;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleRepository;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Clock;
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +32,14 @@ public class PolicyService {
     @Transactional
     public PolicyResponse create(Long vehicleId, PolicyCreateRequest request) {
         Vehicle vehicle = getVehicle(vehicleId);
-        InsurancePolicy policy = new InsurancePolicy(vehicle, findInsurer(request.insurerId()), request.policyType(),
-                request.policyNumber(), request.startDate(), request.endDate(), request.annualPremium(),
+        InsurancePolicy policy = new InsurancePolicy(
+                vehicle,
+                findInsurer(request.insurerId()),
+                request.policyType(),
+                request.policyNumber(),
+                request.startDate(),
+                request.endDate(),
+                request.annualPremium(),
                 request.paymentFrequency());
 
         policy.ensureNoOverlappingKgfb(policyRepository.findByVehicleIdAndPolicyType(vehicleId, PolicyType.KGFB));
@@ -63,10 +68,15 @@ public class PolicyService {
         }
         // A többi kötvényt a módosítás ELŐTT kérdezzük le: a lekérdezés előtti automatikus flush különben
         // már az új dátumokat írná ki, és a domain-szabály helyett az adatbázis-megkötés jelezne.
-        List<InsurancePolicy> kgfbPolicies =
-                policyRepository.findByVehicleIdAndPolicyType(policy.getVehicle().getId(), PolicyType.KGFB);
-        policy.changeTerms(findInsurer(request.insurerId()), request.policyNumber(), request.startDate(),
-                request.endDate(), request.annualPremium(), request.paymentFrequency());
+        List<InsurancePolicy> kgfbPolicies = policyRepository.findByVehicleIdAndPolicyType(
+                policy.getVehicle().getId(), PolicyType.KGFB);
+        policy.changeTerms(
+                findInsurer(request.insurerId()),
+                request.policyNumber(),
+                request.startDate(),
+                request.endDate(),
+                request.annualPremium(),
+                request.paymentFrequency());
         policy.ensureNoOverlappingKgfb(kgfbPolicies);
 
         policyRepository.flush();
@@ -74,7 +84,8 @@ public class PolicyService {
     }
 
     private InsurancePolicy getPolicy(Long id) {
-        InsurancePolicy policy = policyRepository.findWithInsurerById(id)
+        InsurancePolicy policy = policyRepository
+                .findWithInsurerById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kötvény", id));
         accessGuard.requireAccess(policy.getVehicle().getHousehold().getId(), "Kötvény", id);
         return policy;
@@ -82,7 +93,8 @@ public class PolicyService {
 
     /** Idegen háztartás járműve ugyanúgy "nem található", mint a nem létező (ADR-0003). */
     private Vehicle getVehicle(Long vehicleId) {
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+        Vehicle vehicle = vehicleRepository
+                .findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Jármű", vehicleId));
         accessGuard.requireAccess(vehicle.getHousehold().getId(), "Jármű", vehicleId);
         return vehicle;
@@ -90,7 +102,8 @@ public class PolicyService {
 
     /** A kérés törzsében hivatkozott, nem létező biztosító a kérés hibája (400), nem hiányzó URL-erőforrás (404). */
     private Insurer findInsurer(Long insurerId) {
-        return insurerRepository.findById(insurerId)
+        return insurerRepository
+                .findById(insurerId)
                 .orElseThrow(() -> new BusinessRuleException("Nem létező biztosító (id: %d).".formatted(insurerId)));
     }
 

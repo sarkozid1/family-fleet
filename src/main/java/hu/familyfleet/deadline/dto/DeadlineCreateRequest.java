@@ -3,7 +3,6 @@ package hu.familyfleet.deadline.dto;
 import hu.familyfleet.deadline.DeadlineType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
 import java.time.LocalDate;
 
 /**

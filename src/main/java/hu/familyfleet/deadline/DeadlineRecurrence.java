@@ -1,7 +1,6 @@
 package hu.familyfleet.deadline;
 
 import hu.familyfleet.insurance.InsurancePolicy;
-
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -30,10 +29,17 @@ public final class DeadlineRecurrence {
             case TIRE_CHANGE -> Optional.of(due.plusMonths(TIRE_CHANGE_MONTHS));
             case TECHNICAL_INSPECTION -> Optional.of(completedOn.plusYears(TECHNICAL_INSPECTION_YEARS));
             case OIL_CHANGE -> Optional.of(completedOn.plusYears(OIL_CHANGE_YEARS));
-            case INSURANCE_PAYMENT -> withinPolicy(deadline.getPolicy(), DeadlineCalendar.paymentAfter(
-                    deadline.getPolicy().getStartDate(), deadline.getPolicy().getPaymentFrequency(), due));
-            case KGFB_ANNIVERSARY -> withinPolicy(deadline.getPolicy(),
-                    DeadlineCalendar.nextAnniversary(deadline.getPolicy().getStartDate(), due));
+            case INSURANCE_PAYMENT ->
+                withinPolicy(
+                        deadline.getPolicy(),
+                        DeadlineCalendar.paymentAfter(
+                                deadline.getPolicy().getStartDate(),
+                                deadline.getPolicy().getPaymentFrequency(),
+                                due));
+            case KGFB_ANNIVERSARY ->
+                withinPolicy(
+                        deadline.getPolicy(),
+                        DeadlineCalendar.nextAnniversary(deadline.getPolicy().getStartDate(), due));
             case DRIVING_LICENCE, OTHER -> Optional.empty();
         };
     }

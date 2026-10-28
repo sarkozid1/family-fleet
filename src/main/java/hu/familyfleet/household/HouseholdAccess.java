@@ -2,13 +2,12 @@ package hu.familyfleet.household;
 
 import hu.familyfleet.security.AppUser;
 import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.Instant;
-import java.util.Objects;
 
 /** Egy felhasználó hozzáférése egy háztartáshoz (ADR-0003). */
 @Entity

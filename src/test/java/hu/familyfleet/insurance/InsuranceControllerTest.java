@@ -1,25 +1,5 @@
 package hu.familyfleet.insurance;
 
-import hu.familyfleet.common.exception.ConflictException;
-import hu.familyfleet.insurance.dto.InsurerResponse;
-import hu.familyfleet.insurance.dto.PolicyResponse;
-import org.hibernate.exception.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.test.context.support.WithMockUser;
-import hu.familyfleet.support.WebSecurityTestConfig;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.time.Instant;
-import java.time.LocalDate;
-
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +9,25 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import hu.familyfleet.common.exception.ConflictException;
+import hu.familyfleet.insurance.dto.InsurerResponse;
+import hu.familyfleet.insurance.dto.PolicyResponse;
+import hu.familyfleet.support.WebSecurityTestConfig;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDate;
+import org.hibernate.exception.ConstraintViolationException;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @Import(WebSecurityTestConfig.class)
 @WithMockUser
@@ -101,9 +100,22 @@ class InsuranceControllerTest {
 
     @Test
     void createPolicyReturns201WithPolicyLocation() throws Exception {
-        given(policyService.create(eq(3L), any())).willReturn(new PolicyResponse(8L, 3L, 1L, "Allianz Hungária",
-                PolicyType.KGFB, "KGFB-1", LocalDate.of(2026, 3, 1), null, new BigDecimal("52000.00"),
-                PaymentFrequency.QUARTERLY, true, 0L, NOW, NOW));
+        given(policyService.create(eq(3L), any()))
+                .willReturn(new PolicyResponse(
+                        8L,
+                        3L,
+                        1L,
+                        "Allianz Hungária",
+                        PolicyType.KGFB,
+                        "KGFB-1",
+                        LocalDate.of(2026, 3, 1),
+                        null,
+                        new BigDecimal("52000.00"),
+                        PaymentFrequency.QUARTERLY,
+                        true,
+                        0L,
+                        NOW,
+                        NOW));
 
         mockMvc.perform(post("/api/vehicles/3/policies")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,9 +176,13 @@ class InsuranceControllerTest {
 
     @Test
     void namedDatabaseConstraintIsTranslatedToReadableMessage() throws Exception {
-        given(policyService.update(eq(8L), any())).willThrow(new DataIntegrityViolationException("could not execute",
-                new ConstraintViolationException("ERROR: conflicting key value violates exclusion constraint",
-                        new SQLException("raw sql message", "23P01"), "ex_policy_kgfb_no_overlap")));
+        given(policyService.update(eq(8L), any()))
+                .willThrow(new DataIntegrityViolationException(
+                        "could not execute",
+                        new ConstraintViolationException(
+                                "ERROR: conflicting key value violates exclusion constraint",
+                                new SQLException("raw sql message", "23P01"),
+                                "ex_policy_kgfb_no_overlap")));
 
         mockMvc.perform(put("/api/policies/8")
                         .contentType(MediaType.APPLICATION_JSON)

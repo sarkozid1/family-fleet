@@ -8,13 +8,12 @@ import hu.familyfleet.household.HouseholdMember;
 import hu.familyfleet.insurance.InsurancePolicy;
 import hu.familyfleet.vehicle.Vehicle;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "deadline")
@@ -69,8 +68,13 @@ public class Deadline extends AuditableEntity {
      *   <li>kötvénynél a jármű a kötvény járműve (ha nincs megadva, onnan vesszük).</li>
      * </ul>
      */
-    public Deadline(Household household, DeadlineType type, LocalDate dueDate,
-                    Vehicle vehicle, HouseholdMember member, InsurancePolicy policy) {
+    public Deadline(
+            Household household,
+            DeadlineType type,
+            LocalDate dueDate,
+            Vehicle vehicle,
+            HouseholdMember member,
+            InsurancePolicy policy) {
         this.household = Objects.requireNonNull(household, "household");
         this.type = Objects.requireNonNull(type, "type");
         this.dueDate = Objects.requireNonNull(dueDate, "dueDate");
@@ -105,8 +109,8 @@ public class Deadline extends AuditableEntity {
 
     private void ensureOpen(String action) {
         if (!isOpen()) {
-            throw new ConflictException("Csak nyitott határidőt lehet %s, ez a határidő már %s állapotú."
-                    .formatted(action, status));
+            throw new ConflictException(
+                    "Csak nyitott határidőt lehet %s, ez a határidő már %s állapotú.".formatted(action, status));
         }
     }
 
@@ -129,8 +133,8 @@ public class Deadline extends AuditableEntity {
             case NONE -> true;
         };
         if (!present) {
-            throw new BusinessRuleException("A(z) %s típusú határidőhöz kötelező megadni: %s."
-                    .formatted(type, linkName(type.requiredLink())));
+            throw new BusinessRuleException(
+                    "A(z) %s típusú határidőhöz kötelező megadni: %s.".formatted(type, linkName(type.requiredLink())));
         }
     }
 

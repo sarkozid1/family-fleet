@@ -2,7 +2,6 @@ package hu.familyfleet.reminder;
 
 import hu.familyfleet.deadline.Deadline;
 import hu.familyfleet.deadline.DeadlineType;
-
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -32,18 +31,27 @@ final class ReminderMessageBuilder {
 
     /** A határidők a hátralévő napok szerint csoportosítva, a legsürgősebb elöl. */
     static String body(String householdName, LocalDate today, List<Deadline> deadlines) {
-        Map<Long, List<Deadline>> byDaysLeft = deadlines.stream().collect(Collectors.groupingBy(
-                deadline -> ChronoUnit.DAYS.between(today, deadline.getDueDate()), TreeMap::new, Collectors.toList()));
+        Map<Long, List<Deadline>> byDaysLeft = deadlines.stream()
+                .collect(Collectors.groupingBy(
+                        deadline -> ChronoUnit.DAYS.between(today, deadline.getDueDate()),
+                        TreeMap::new,
+                        Collectors.toList()));
 
         StringBuilder text = new StringBuilder()
-                .append("Kedves ").append(householdName).append("!\n\n")
+                .append("Kedves ")
+                .append(householdName)
+                .append("!\n\n")
                 .append("A következő határidők közelednek:\n");
         byDaysLeft.forEach((daysLeft, group) -> {
             text.append('\n').append(daysLeftLabel(daysLeft)).append(":\n");
-            group.forEach(deadline -> text.append("  - ").append(deadline.getDueDate())
-                    .append(" – ").append(describe(deadline)).append('\n'));
+            group.forEach(deadline -> text.append("  - ")
+                    .append(deadline.getDueDate())
+                    .append(" – ")
+                    .append(describe(deadline))
+                    .append('\n'));
         });
-        return text.append("\nEzt a levelet a Family Fleet küldte automatikusan.\n").toString();
+        return text.append("\nEzt a levelet a Family Fleet küldte automatikusan.\n")
+                .toString();
     }
 
     static String describe(Deadline deadline) {

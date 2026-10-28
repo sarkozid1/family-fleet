@@ -1,7 +1,16 @@
 package hu.familyfleet.reminder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+
 import hu.familyfleet.deadline.DeadlineRepository;
 import hu.familyfleet.reminder.HouseholdReminderSender.Outcome;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,16 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.MailSendException;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 /** A futás logikája ütemező, adatbázis és SMTP nélkül. */
 @ExtendWith(MockitoExtension.class)
@@ -60,7 +59,8 @@ class ReminderServiceTest {
         given(sender.send(1L, TODAY, DUE_DATES)).willReturn(Outcome.SENT);
         given(sender.send(2L, TODAY, DUE_DATES)).willReturn(Outcome.ALREADY_SENT);
         given(sender.send(3L, TODAY, DUE_DATES)).willThrow(new MailSendException("SMTP nem elérhető"));
-        given(sender.send(4L, TODAY, DUE_DATES)).willThrow(new DataIntegrityViolationException("uq_reminder_log_household_date"));
+        given(sender.send(4L, TODAY, DUE_DATES))
+                .willThrow(new DataIntegrityViolationException("uq_reminder_log_household_date"));
         given(sender.send(5L, TODAY, DUE_DATES)).willReturn(Outcome.SENT);
 
         ReminderService.RunResult result = service.sendDailyReminders();

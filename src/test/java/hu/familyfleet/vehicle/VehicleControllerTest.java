@@ -1,28 +1,5 @@
 package hu.familyfleet.vehicle;
 
-import hu.familyfleet.common.exception.BusinessRuleException;
-import hu.familyfleet.common.exception.ConflictException;
-import hu.familyfleet.common.web.PageResponse;
-import hu.familyfleet.vehicle.dto.VehicleResponse;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.test.context.support.WithMockUser;
-import hu.familyfleet.support.WebSecurityTestConfig;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.MediaType;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.hasItem;
@@ -34,14 +11,36 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import hu.familyfleet.common.exception.BusinessRuleException;
+import hu.familyfleet.common.exception.ConflictException;
+import hu.familyfleet.common.web.PageResponse;
+import hu.familyfleet.support.WebSecurityTestConfig;
+import hu.familyfleet.vehicle.dto.VehicleResponse;
+import java.time.Instant;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
 @Import(WebSecurityTestConfig.class)
 @WithMockUser
 @WebMvcTest(VehicleController.class)
 class VehicleControllerTest {
 
     private static final Instant NOW = Instant.parse("2026-10-28T10:00:00Z");
-    private static final VehicleResponse SKODA = new VehicleResponse(5L, 1L, null, VehicleType.CAR, "Skoda", "Octavia",
-            "ABC123", null, (short) 2018, 120_000, 0L, NOW, NOW);
+    private static final VehicleResponse SKODA = new VehicleResponse(
+            5L, 1L, null, VehicleType.CAR, "Skoda", "Octavia", "ABC123", null, (short) 2018, 120_000, 0L, NOW, NOW);
 
     @Autowired
     private MockMvc mockMvc;
@@ -181,11 +180,13 @@ class VehicleControllerTest {
     @Test
     void deleteWithDependentsReturns409() throws Exception {
         willThrow(new ConflictException("A jármű nem törölhető, mert biztosítási kötvény tartozik hozzá."))
-                .given(vehicleService).delete(5L);
+                .given(vehicleService)
+                .delete(5L);
 
         mockMvc.perform(delete("/api/vehicles/5"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.detail").value("A jármű nem törölhető, mert biztosítási kötvény tartozik hozzá."));
+                .andExpect(
+                        jsonPath("$.detail").value("A jármű nem törölhető, mert biztosítási kötvény tartozik hozzá."));
     }
 
     private static String vehicleJson(String plate) {

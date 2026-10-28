@@ -1,5 +1,7 @@
 # Family Fleet
 
+[![CI](https://github.com/sarkozid1/family-fleet/actions/workflows/ci.yml/badge.svg)](https://github.com/sarkozid1/family-fleet/actions/workflows/ci.yml)
+
 Családi járműnyilvántartó REST API: háztartások, családtagok, járművek, biztosítások és
 határidők (műszaki vizsga, KGFB-évforduló, gépjárműadó, autópálya-matrica stb.) egy helyen.
 
@@ -91,6 +93,30 @@ A teljes ellenőrzés (tesztek + csomagolás), ugyanaz, ami a PR-ok előtt is fu
 
 Windows alatt a `./mvnw` helyett `.\mvnw.cmd` kell.
 
+A `verify` a teszteken túl minőségi kapukat is ellenőriz:
+
+- **Lefedettség (JaCoCo):** legalább 80% sorlefedettség, a riport: `target/site/jacoco/index.html`
+- **Formázás (Spotless, Palantir Java Format):** eltérés esetén a build elbukik; javítás:
+
+```bash
+./mvnw spotless:apply
+```
+
+Ugyanez fut a GitHub Actions CI-ban minden PR-ra és a `main`-re, és ott a Docker-image buildje is
+ellenőrizve van.
+
+## Docker
+
+Multi-stage build (JDK-val fordít, csak JRE-vel fut), nem root felhasználóval, `prod` profillal:
+
+```bash
+docker build -t family-fleet .
+```
+
+```bash
+docker run -p 8080:8080 -e DB_URL=jdbc:postgresql://db:5432/familyfleet -e DB_USERNAME=familyfleet -e DB_PASSWORD=... -e MAIL_HOST=smtp.example.com -e REMINDER_FROM=noreply@example.com -e JWT_SECRET=... family-fleet
+```
+
 ## Technológiák
 
 - Java 21, Spring Boot 4.1
@@ -101,6 +127,7 @@ Windows alatt a `./mvnw` helyett `.\mvnw.cmd` kell.
 - Spring Boot Actuator, strukturált (ECS) logolás, springdoc-openapi (Swagger UI)
 - Lombok
 - Tesztek: JUnit 5, AssertJ, Mockito, Testcontainers 2
+- Minőség és szállítás: JaCoCo, Spotless (Palantir Java Format), GitHub Actions, Docker
 
 ## Projektfelépítés
 

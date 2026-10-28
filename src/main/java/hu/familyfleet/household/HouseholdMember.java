@@ -1,13 +1,12 @@
 package hu.familyfleet.household;
 
 import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.Instant;
-import java.util.Objects;
 
 @Entity
 @Table(name = "household_member")

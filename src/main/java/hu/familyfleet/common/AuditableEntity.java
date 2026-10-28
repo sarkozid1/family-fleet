@@ -3,11 +3,10 @@ package hu.familyfleet.common;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Version;
+import java.time.Instant;
 import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.Instant;
 
 /**
  * Közös mezők a gyakran módosuló entitásokhoz: optimista zárolás + auditidőbélyegek.

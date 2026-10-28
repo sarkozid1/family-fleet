@@ -2,13 +2,12 @@ package hu.familyfleet.reminder;
 
 import hu.familyfleet.household.Household;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /** Egy háztartásnak adott napon elküldött emlékeztető. Csak beszúrjuk, sosem módosítjuk. */
 @Entity
@@ -37,7 +36,8 @@ public class ReminderLog {
     @Column(nullable = false)
     private Instant sentAt;
 
-    public ReminderLog(Household household, LocalDate reminderDate, int recipientCount, int deadlineCount, Instant sentAt) {
+    public ReminderLog(
+            Household household, LocalDate reminderDate, int recipientCount, int deadlineCount, Instant sentAt) {
         this.household = Objects.requireNonNull(household, "household");
         this.reminderDate = Objects.requireNonNull(reminderDate, "reminderDate");
         this.recipientCount = recipientCount;

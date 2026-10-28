@@ -3,7 +3,6 @@ package hu.familyfleet.deadline.dto;
 import hu.familyfleet.deadline.Deadline;
 import hu.familyfleet.deadline.DeadlineStatus;
 import hu.familyfleet.deadline.DeadlineType;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;

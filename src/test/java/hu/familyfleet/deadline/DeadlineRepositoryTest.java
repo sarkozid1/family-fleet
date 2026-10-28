@@ -1,5 +1,8 @@
 package hu.familyfleet.deadline;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import hu.familyfleet.TestcontainersConfiguration;
 import hu.familyfleet.household.Household;
 import hu.familyfleet.household.HouseholdRepository;
@@ -7,6 +10,9 @@ import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleRepository;
 import hu.familyfleet.vehicle.VehicleType;
 import jakarta.persistence.EntityManager;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +23,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -62,9 +61,10 @@ class DeadlineRepositoryTest {
         Deadline done = save(DeadlineType.VEHICLE_TAX, LocalDate.of(2026, 11, 1));
         done.markDone(Instant.parse("2026-10-20T10:00:00Z"));
         Household otherHousehold = householdRepository.save(new Household("Másik család"));
-        Vehicle otherVehicle = vehicleRepository.save(new Vehicle(otherHousehold, VehicleType.CAR, "Opel", "Astra", "XYZ987"));
-        deadlineRepository.save(new Deadline(otherHousehold, DeadlineType.OIL_CHANGE, LocalDate.of(2026, 11, 1),
-                otherVehicle, null, null));
+        Vehicle otherVehicle =
+                vehicleRepository.save(new Vehicle(otherHousehold, VehicleType.CAR, "Opel", "Astra", "XYZ987"));
+        deadlineRepository.save(new Deadline(
+                otherHousehold, DeadlineType.OIL_CHANGE, LocalDate.of(2026, 11, 1), otherVehicle, null, null));
         entityManager.flush();
 
         List<Deadline> result = deadlineRepository.findOpenDueUntil(household.getId(), LocalDate.of(2026, 11, 27));
@@ -82,15 +82,20 @@ class DeadlineRepositoryTest {
         entityManager.flush();
         PageRequest page = PageRequest.of(0, 10, Sort.by("dueDate"));
 
-        assertThat(deadlineRepository.findAll(
-                DeadlineSpecifications.matching(household.getId(), null, null, null, null), page).getTotalElements())
+        assertThat(deadlineRepository
+                        .findAll(DeadlineSpecifications.matching(household.getId(), null, null, null, null), page)
+                        .getTotalElements())
                 .isEqualTo(4);
         assertThat(deadlineRepository.findAll(
-                DeadlineSpecifications.matching(household.getId(), DeadlineStatus.OPEN, DeadlineType.VEHICLE_TAX, null, null), page))
+                        DeadlineSpecifications.matching(
+                                household.getId(), DeadlineStatus.OPEN, DeadlineType.VEHICLE_TAX, null, null),
+                        page))
                 .extracting(Deadline::getDueDate)
                 .containsExactly(LocalDate.of(2026, 3, 15), LocalDate.of(2026, 9, 15));
-        assertThat(deadlineRepository.findAll(DeadlineSpecifications.matching(
-                        household.getId(), null, null, LocalDate.of(2026, 3, 10), LocalDate.of(2026, 12, 31)), page))
+        assertThat(deadlineRepository.findAll(
+                        DeadlineSpecifications.matching(
+                                household.getId(), null, null, LocalDate.of(2026, 3, 10), LocalDate.of(2026, 12, 31)),
+                        page))
                 .extracting(Deadline::getDueDate)
                 .containsExactly(LocalDate.of(2026, 3, 15), LocalDate.of(2026, 9, 15));
     }
@@ -116,8 +121,8 @@ class DeadlineRepositoryTest {
     @Test
     void databaseRequiresTypeSpecificLink() {
         assertThatThrownBy(() -> jdbcTemplate.update(
-                "INSERT INTO deadline (household_id, type, due_date) VALUES (?, 'TECHNICAL_INSPECTION', DATE '2026-12-01')",
-                household.getId()))
+                        "INSERT INTO deadline (household_id, type, due_date) VALUES (?, 'TECHNICAL_INSPECTION', DATE '2026-12-01')",
+                        household.getId()))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("ck_deadline_required_link");
     }
@@ -125,8 +130,8 @@ class DeadlineRepositoryTest {
     @Test
     void databaseRequiresCompletedAtExactlyForDoneDeadlines() {
         assertThatThrownBy(() -> jdbcTemplate.update(
-                "INSERT INTO deadline (household_id, type, due_date, status) VALUES (?, 'OTHER', DATE '2026-12-01', 'DONE')",
-                household.getId()))
+                        "INSERT INTO deadline (household_id, type, due_date, status) VALUES (?, 'OTHER', DATE '2026-12-01', 'DONE')",
+                        household.getId()))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("ck_deadline_completed_at");
     }

@@ -1,25 +1,25 @@
 package hu.familyfleet.insurance;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.common.exception.ConflictException;
 import hu.familyfleet.household.Household;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleType;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 class InsurancePolicyTest {
 
-    private final Vehicle vehicle = new Vehicle(new Household("Teszt család"), VehicleType.CAR, "Skoda", "Octavia", "ABC123");
+    private final Vehicle vehicle =
+            new Vehicle(new Household("Teszt család"), VehicleType.CAR, "Skoda", "Octavia", "ABC123");
     private final Insurer insurer = new Insurer("Teszt Biztosító");
 
     @ParameterizedTest(name = "kezdet {0}, vég {1}")
@@ -34,26 +34,31 @@ class InsurancePolicyTest {
     void changeTermsKeepsDateRule() {
         InsurancePolicy policy = policy(PolicyType.CASCO, LocalDate.of(2026, 1, 1), null);
 
-        assertThatThrownBy(() -> policy.changeTerms(insurer, null, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 5, 1),
-                        BigDecimal.TEN, PaymentFrequency.ANNUAL))
+        assertThatThrownBy(() -> policy.changeTerms(
+                        insurer,
+                        null,
+                        LocalDate.of(2026, 6, 1),
+                        LocalDate.of(2026, 5, 1),
+                        BigDecimal.TEN,
+                        PaymentFrequency.ANNUAL))
                 .isInstanceOf(BusinessRuleException.class);
         assertThat(policy.getStartDate()).isEqualTo(LocalDate.of(2026, 1, 1));
     }
 
     @Test
     void negativePremiumIsRejected() {
-        assertThatThrownBy(() -> new InsurancePolicy(vehicle, insurer, PolicyType.KGFB,
-                LocalDate.of(2026, 1, 1), new BigDecimal("-1"), PaymentFrequency.ANNUAL))
+        assertThatThrownBy(() -> new InsurancePolicy(
+                        vehicle,
+                        insurer,
+                        PolicyType.KGFB,
+                        LocalDate.of(2026, 1, 1),
+                        new BigDecimal("-1"),
+                        PaymentFrequency.ANNUAL))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @ParameterizedTest(name = "{0}: {1}")
-    @CsvSource({
-        "2025-12-31, false",
-        "2026-01-01, true",
-        "2026-12-31, true",
-        "2027-01-01, false"
-    })
+    @CsvSource({"2025-12-31, false", "2026-01-01, true", "2026-12-31, true", "2027-01-01, false"})
     void activeOnIsHalfOpenInterval(LocalDate day, boolean expected) {
         InsurancePolicy policy = policy(PolicyType.KGFB, LocalDate.of(2026, 1, 1), LocalDate.of(2027, 1, 1));
 
@@ -103,7 +108,8 @@ class InsurancePolicyTest {
         InsurancePolicy kgfb = policy(PolicyType.KGFB, LocalDate.of(2026, 1, 1), null);
         InsurancePolicy casco = policy(PolicyType.CASCO, LocalDate.of(2026, 1, 1), null);
 
-        assertThatCode(() -> casco.ensureNoOverlappingKgfb(List.of(kgfb, casco))).doesNotThrowAnyException();
+        assertThatCode(() -> casco.ensureNoOverlappingKgfb(List.of(kgfb, casco)))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -114,7 +120,7 @@ class InsurancePolicyTest {
     }
 
     private InsurancePolicy policy(PolicyType type, LocalDate start, LocalDate end) {
-        return new InsurancePolicy(vehicle, insurer, type, null, start, end, new BigDecimal("50000"),
-                PaymentFrequency.ANNUAL);
+        return new InsurancePolicy(
+                vehicle, insurer, type, null, start, end, new BigDecimal("50000"), PaymentFrequency.ANNUAL);
     }
 }

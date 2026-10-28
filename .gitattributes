@@ -1,2 +1,11 @@
-/mvnw text eol=lf
+# Minden szöveges fájl LF sorvéggel kerül a repóba és a munkakönyvtárba is, operációs rendszertől
+# függetlenül. Így a formázás-ellenőrzés (Spotless) Windowson és a Linuxos CI-ban is ugyanazt látja.
+* text=auto eol=lf
+
+# A Windows-os szkriptek CRLF-et igényelnek
 *.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Bináris fájlok
+*.jar binary
+*.png binary

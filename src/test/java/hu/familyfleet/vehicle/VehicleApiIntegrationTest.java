@@ -1,10 +1,12 @@
 package hu.familyfleet.vehicle;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
-import hu.familyfleet.support.TestAuth;
-import org.junit.jupiter.api.BeforeEach;
-import org.springframework.web.context.WebApplicationContext;
 import hu.familyfleet.deadline.Deadline;
 import hu.familyfleet.deadline.DeadlineRepository;
 import hu.familyfleet.deadline.DeadlineType;
@@ -15,6 +17,10 @@ import hu.familyfleet.insurance.InsurancePolicyRepository;
 import hu.familyfleet.insurance.InsurerRepository;
 import hu.familyfleet.insurance.PaymentFrequency;
 import hu.familyfleet.insurance.PolicyType;
+import hu.familyfleet.support.TestAuth;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,14 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.web.context.WebApplicationContext;
 
 /** Végponttól végpontig a valódi adatbázissal; minden teszt saját háztartást hoz létre. */
 @SpringBootTest
@@ -82,23 +81,17 @@ class VehicleApiIntegrationTest {
                 .andReturn();
         String vehicleUrl = created.getResponse().getHeader("Location");
 
-        mockMvc.perform(put(vehicleUrl)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson(50_000, 0)))
+        mockMvc.perform(put(vehicleUrl).contentType(MediaType.APPLICATION_JSON).content(updateJson(50_000, 0)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.currentMileage").value(50_000))
                 .andExpect(jsonPath("$.ownerId").doesNotExist())
                 .andExpect(jsonPath("$.version").value(1));
 
         // Egy másik kliens még a 0-s verziót látta: a módosítása nem írhatja felül az előzőt.
-        mockMvc.perform(put(vehicleUrl)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson(51_000, 0)))
+        mockMvc.perform(put(vehicleUrl).contentType(MediaType.APPLICATION_JSON).content(updateJson(51_000, 0)))
                 .andExpect(status().isConflict());
 
-        mockMvc.perform(put(vehicleUrl)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson(40_000, 1)))
+        mockMvc.perform(put(vehicleUrl).contentType(MediaType.APPLICATION_JSON).content(updateJson(40_000, 1)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail", containsString("nem csökkenhet")));
 
@@ -173,13 +166,18 @@ class VehicleApiIntegrationTest {
         long withDeadline = createVehicle(householdId, "DDD222");
 
         Vehicle policyVehicle = vehicleRepository.findById(withPolicy).orElseThrow();
-        policyRepository.save(new InsurancePolicy(policyVehicle, insurerRepository.findAll().getFirst(),
-                PolicyType.KGFB, LocalDate.of(2026, 1, 1), new BigDecimal("52000"), PaymentFrequency.ANNUAL));
+        policyRepository.save(new InsurancePolicy(
+                policyVehicle,
+                insurerRepository.findAll().getFirst(),
+                PolicyType.KGFB,
+                LocalDate.of(2026, 1, 1),
+                new BigDecimal("52000"),
+                PaymentFrequency.ANNUAL));
         Vehicle deadlineVehicle = vehicleRepository.findById(withDeadline).orElseThrow();
         // A tranzakción kívül betöltött jármű háztartása lazy proxy session nélkül, ezért külön töltjük be.
         Household household = householdRepository.findById(householdId).orElseThrow();
-        Deadline deadline = new Deadline(household, DeadlineType.TECHNICAL_INSPECTION,
-                LocalDate.of(2027, 4, 30), deadlineVehicle, null, null);
+        Deadline deadline = new Deadline(
+                household, DeadlineType.TECHNICAL_INSPECTION, LocalDate.of(2027, 4, 30), deadlineVehicle, null, null);
         deadlineRepository.save(deadline);
 
         mockMvc.perform(delete("/api/vehicles/{id}", withPolicy))

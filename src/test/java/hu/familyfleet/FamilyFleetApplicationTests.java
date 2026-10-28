@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Import;
 @Import(TestcontainersConfiguration.class)
 class FamilyFleetApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {}
 }

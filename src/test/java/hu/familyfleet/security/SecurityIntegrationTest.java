@@ -1,8 +1,13 @@
 package hu.familyfleet.security;
 
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
 import hu.familyfleet.support.TestAuth;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,12 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.context.WebApplicationContext;
-
-import java.util.UUID;
-
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** Hitelesítés és adatszintű jogosultság végponttól végpontig, valódi tokenekkel. */
 @SpringBootTest
@@ -37,7 +36,8 @@ class SecurityIntegrationTest {
     void registerLoginAndUseToken() throws Exception {
         String email = "Anna." + UUID.randomUUID() + "@Example.com";
 
-        anonymous.perform(post("/api/auth/register")
+        anonymous
+                .perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "email": "%s", "password": "nagyon-titkos-1", "displayName": "Kovács Anna" }
@@ -47,14 +47,16 @@ class SecurityIntegrationTest {
                 .andExpect(jsonPath("$.role").value("USER"))
                 .andExpect(content().string(not(containsString("password"))));
 
-        anonymous.perform(post("/api/auth/register")
+        anonymous
+                .perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "email": "%s", "password": "masik-jelszo-2", "displayName": "Másik" }
                                 """.formatted(email.toUpperCase())))
                 .andExpect(status().isConflict());
 
-        MvcResult login = anonymous.perform(post("/api/auth/login")
+        MvcResult login = anonymous
+                .perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "email": "%s", "password": "nagyon-titkos-1" }
@@ -65,10 +67,12 @@ class SecurityIntegrationTest {
                 .andReturn();
         String token = JsonPath.read(login.getResponse().getContentAsString(), "$.accessToken");
 
-        anonymous.perform(get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+        anonymous
+                .perform(get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.displayName").value("Kovács Anna"));
-        anonymous.perform(post("/api/households")
+        anonymous
+                .perform(post("/api/households")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -80,28 +84,35 @@ class SecurityIntegrationTest {
     @Test
     void wrongPasswordAndUnknownEmailGiveTheSame401() throws Exception {
         String email = "bela." + UUID.randomUUID() + "@example.com";
-        anonymous.perform(post("/api/auth/register")
+        anonymous
+                .perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "email": "%s", "password": "helyes-jelszo-1", "displayName": "Béla" }
                                 """.formatted(email)))
                 .andExpect(status().isCreated());
 
-        String wrongPassword = anonymous.perform(post("/api/auth/login")
+        String wrongPassword = anonymous
+                .perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "email": "%s", "password": "rossz-jelszo-1" }
                                 """.formatted(email)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-                .andReturn().getResponse().getContentAsString();
-        String unknownEmail = anonymous.perform(post("/api/auth/login")
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String unknownEmail = anonymous
+                .perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "email": "nincs.ilyen@example.com", "password": "rossz-jelszo-1" }
                                 """))
                 .andExpect(status().isUnauthorized())
-                .andReturn().getResponse().getContentAsString();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         org.assertj.core.api.Assertions.assertThat(JsonPath.<String>read(wrongPassword, "$.detail"))
                 .isEqualTo(JsonPath.<String>read(unknownEmail, "$.detail"))
@@ -110,17 +121,20 @@ class SecurityIntegrationTest {
 
     @Test
     void protectedEndpointsRequireValidToken() throws Exception {
-        anonymous.perform(get("/api/households"))
+        anonymous
+                .perform(get("/api/households"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
                 .andExpect(jsonPath("$.title").value("Hitelesítés szükséges"))
                 .andExpect(jsonPath("$.requestId").isNotEmpty());
 
-        anonymous.perform(get("/api/households").header(HttpHeaders.AUTHORIZATION, "Bearer nem.ervenyes.token"))
+        anonymous
+                .perform(get("/api/households").header(HttpHeaders.AUTHORIZATION, "Bearer nem.ervenyes.token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
 
-        anonymous.perform(post("/api/auth/register")
+        anonymous
+                .perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "email": "rovid@example.com", "password": "rovid", "displayName": "R" }
@@ -139,7 +153,8 @@ class SecurityIntegrationTest {
                         .content("""
                                 { "name": "Titkos család" }
                                 """))
-                .andExpect(status().isCreated()).andReturn());
+                .andExpect(status().isCreated())
+                .andReturn());
         long memberId = idOf(owner.perform(post("/api/households/{id}/members", householdId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -160,8 +175,7 @@ class SecurityIntegrationTest {
                 .andReturn());
 
         // A tulajdonos látja
-        owner.perform(get("/api/households"))
-                .andExpect(jsonPath("$[*].id", hasItem((int) householdId)));
+        owner.perform(get("/api/households")).andExpect(jsonPath("$[*].id", hasItem((int) householdId)));
         owner.perform(get("/api/vehicles/{id}", vehicleId)).andExpect(status().isOk());
 
         // Az idegen nem látja a listában, és minden közvetlen elérés 404 (nem 403)
@@ -169,7 +183,8 @@ class SecurityIntegrationTest {
         stranger.perform(get("/api/households/{id}", householdId)).andExpect(status().isNotFound());
         stranger.perform(get("/api/households/{id}/members", householdId)).andExpect(status().isNotFound());
         stranger.perform(get("/api/households/{id}/vehicles", householdId)).andExpect(status().isNotFound());
-        stranger.perform(get("/api/households/{id}/deadlines/upcoming", householdId)).andExpect(status().isNotFound());
+        stranger.perform(get("/api/households/{id}/deadlines/upcoming", householdId))
+                .andExpect(status().isNotFound());
         stranger.perform(get("/api/vehicles/{id}", vehicleId)).andExpect(status().isNotFound());
         stranger.perform(delete("/api/vehicles/{id}", vehicleId)).andExpect(status().isNotFound());
         stranger.perform(get("/api/vehicles/{id}/policies", vehicleId)).andExpect(status().isNotFound());

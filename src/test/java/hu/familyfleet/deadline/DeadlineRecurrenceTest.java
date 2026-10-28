@@ -1,5 +1,7 @@
 package hu.familyfleet.deadline;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import hu.familyfleet.household.Household;
 import hu.familyfleet.household.HouseholdMember;
 import hu.familyfleet.insurance.InsurancePolicy;
@@ -8,14 +10,11 @@ import hu.familyfleet.insurance.PaymentFrequency;
 import hu.familyfleet.insurance.PolicyType;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleType;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class DeadlineRecurrenceTest {
 
@@ -46,18 +45,21 @@ class DeadlineRecurrenceTest {
         HouseholdMember anna = new HouseholdMember(household, "Anna", null);
 
         assertThat(DeadlineRecurrence.nextDueDate(
-                new Deadline(household, DeadlineType.DRIVING_LICENCE, LocalDate.of(2030, 5, 1), null, anna, null),
-                LocalDate.of(2030, 4, 1))).isEmpty();
+                        new Deadline(
+                                household, DeadlineType.DRIVING_LICENCE, LocalDate.of(2030, 5, 1), null, anna, null),
+                        LocalDate.of(2030, 4, 1)))
+                .isEmpty();
         assertThat(DeadlineRecurrence.nextDueDate(
-                new Deadline(household, DeadlineType.OTHER, LocalDate.of(2026, 12, 1), null, null, null),
-                LocalDate.of(2026, 12, 1))).isEmpty();
+                        new Deadline(household, DeadlineType.OTHER, LocalDate.of(2026, 12, 1), null, null, null),
+                        LocalDate.of(2026, 12, 1)))
+                .isEmpty();
     }
 
     @Test
     void insurancePaymentFollowsPolicyScheduleFromStartDate() {
         InsurancePolicy policy = policy(LocalDate.of(2026, 1, 31), null, PaymentFrequency.MONTHLY);
-        Deadline february = new Deadline(household, DeadlineType.INSURANCE_PAYMENT, LocalDate.of(2026, 2, 28),
-                null, null, policy);
+        Deadline february =
+                new Deadline(household, DeadlineType.INSURANCE_PAYMENT, LocalDate.of(2026, 2, 28), null, null, policy);
 
         // A febr. 28. utáni fizetés márc. 31., nem márc. 28.: a kezdőnapból számolunk, nem láncolva.
         assertThat(DeadlineRecurrence.nextDueDate(february, LocalDate.of(2026, 2, 27)))
@@ -67,8 +69,8 @@ class DeadlineRecurrenceTest {
     @Test
     void kgfbAnniversaryRecursYearly() {
         InsurancePolicy policy = policy(LocalDate.of(2024, 2, 29), null, PaymentFrequency.ANNUAL);
-        Deadline anniversary = new Deadline(household, DeadlineType.KGFB_ANNIVERSARY, LocalDate.of(2027, 2, 28),
-                null, null, policy);
+        Deadline anniversary =
+                new Deadline(household, DeadlineType.KGFB_ANNIVERSARY, LocalDate.of(2027, 2, 28), null, null, policy);
 
         assertThat(DeadlineRecurrence.nextDueDate(anniversary, LocalDate.of(2027, 1, 10)))
                 .contains(LocalDate.of(2028, 2, 29));
@@ -77,17 +79,26 @@ class DeadlineRecurrenceTest {
     @Test
     void noNextDeadlineAfterPolicyEnds() {
         InsurancePolicy policy = policy(LocalDate.of(2026, 1, 1), LocalDate.of(2027, 1, 1), PaymentFrequency.QUARTERLY);
-        Deadline lastPayment = new Deadline(household, DeadlineType.INSURANCE_PAYMENT, LocalDate.of(2026, 10, 1),
-                null, null, policy);
-        Deadline anniversary = new Deadline(household, DeadlineType.KGFB_ANNIVERSARY, LocalDate.of(2027, 1, 1),
-                null, null, policy);
+        Deadline lastPayment =
+                new Deadline(household, DeadlineType.INSURANCE_PAYMENT, LocalDate.of(2026, 10, 1), null, null, policy);
+        Deadline anniversary =
+                new Deadline(household, DeadlineType.KGFB_ANNIVERSARY, LocalDate.of(2027, 1, 1), null, null, policy);
 
-        assertThat(DeadlineRecurrence.nextDueDate(lastPayment, LocalDate.of(2026, 10, 1))).isEmpty();
-        assertThat(DeadlineRecurrence.nextDueDate(anniversary, LocalDate.of(2026, 12, 1))).isEmpty();
+        assertThat(DeadlineRecurrence.nextDueDate(lastPayment, LocalDate.of(2026, 10, 1)))
+                .isEmpty();
+        assertThat(DeadlineRecurrence.nextDueDate(anniversary, LocalDate.of(2026, 12, 1)))
+                .isEmpty();
     }
 
     private InsurancePolicy policy(LocalDate start, LocalDate end, PaymentFrequency frequency) {
-        return new InsurancePolicy(vehicle, new Insurer("Biztosító"), PolicyType.KGFB, null, start, end,
-                new BigDecimal("60000"), frequency);
+        return new InsurancePolicy(
+                vehicle,
+                new Insurer("Biztosító"),
+                PolicyType.KGFB,
+                null,
+                start,
+                end,
+                new BigDecimal("60000"),
+                frequency);
     }
 }

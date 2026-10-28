@@ -1,12 +1,11 @@
 package hu.familyfleet.deadline;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import hu.familyfleet.insurance.PaymentFrequency;
+import java.time.LocalDate;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-
-import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /** A dátumszabályok határesetei: évváltás, hónap vége, szökőév. Spring és adatbázis nélkül. */
 class DeadlineCalendarTest {
@@ -26,12 +25,7 @@ class DeadlineCalendarTest {
     }
 
     @ParameterizedTest(name = "vásárlás {0} -> lejárat {1}")
-    @CsvSource({
-        "2026-01-01, 2027-01-31",
-        "2026-10-28, 2027-01-31",
-        "2026-12-31, 2027-01-31",
-        "2028-02-29, 2029-01-31"
-    })
+    @CsvSource({"2026-01-01, 2027-01-31", "2026-10-28, 2027-01-31", "2026-12-31, 2027-01-31", "2028-02-29, 2029-01-31"})
     void vignetteExpiresOnJanuary31stOfNextYear(LocalDate purchase, LocalDate expected) {
         assertThat(DeadlineCalendar.vignetteExpiry(purchase)).isEqualTo(expected);
     }
@@ -56,7 +50,7 @@ class DeadlineCalendarTest {
     @CsvSource({
         "2027-03-01, 2027-01-30",
         "2028-03-01, 2028-01-31", // szökőév: februárnak 29 napja van
-        "2027-01-15, 2026-12-16"  // évváltáson át
+        "2027-01-15, 2026-12-16" // évváltáson át
     })
     void kgfbCancellationDeadlineIs30DaysBeforeAnniversary(LocalDate anniversary, LocalDate expected) {
         assertThat(DeadlineCalendar.kgfbCancellationDeadline(anniversary)).isEqualTo(expected);
@@ -78,7 +72,8 @@ class DeadlineCalendarTest {
         "2025-08-31, SEMI_ANNUAL, 2025-09-01, 2026-02-28"
     })
     void nextPaymentDate(LocalDate start, PaymentFrequency frequency, LocalDate onOrAfter, LocalDate expected) {
-        assertThat(DeadlineCalendar.nextPaymentDate(start, frequency, onOrAfter)).isEqualTo(expected);
+        assertThat(DeadlineCalendar.nextPaymentDate(start, frequency, onOrAfter))
+                .isEqualTo(expected);
     }
 
     @ParameterizedTest(name = "kezdet {0}, {1}, előző {2} -> {3}")

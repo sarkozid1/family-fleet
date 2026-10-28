@@ -1,15 +1,14 @@
 package hu.familyfleet.reminder;
 
 import hu.familyfleet.deadline.DeadlineRepository;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
-
-import java.time.Clock;
-import java.time.LocalDate;
-import java.util.List;
 
 /**
  * A napi emlékeztető-futás: megkeresi az érintett háztartásokat, és mindegyiknek külön
@@ -30,7 +29,8 @@ public class ReminderService {
 
     public RunResult sendDailyReminders() {
         LocalDate today = LocalDate.now(clock);
-        List<LocalDate> dueDates = properties.daysBefore().stream().map(today::plusDays).toList();
+        List<LocalDate> dueDates =
+                properties.daysBefore().stream().map(today::plusDays).toList();
 
         int sent = 0;
         int skipped = 0;

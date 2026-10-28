@@ -6,13 +6,12 @@ import hu.familyfleet.household.dto.MemberRequest;
 import hu.familyfleet.household.dto.MemberResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @Tag(name = "Háztartások", description = "Háztartások és családtagok")
 @RestController
@@ -44,8 +43,7 @@ public class HouseholdController {
     }
 
     @PostMapping("/{id}/members")
-    public ResponseEntity<MemberResponse> addMember(
-            @PathVariable Long id, @Valid @RequestBody MemberRequest request) {
+    public ResponseEntity<MemberResponse> addMember(@PathVariable Long id, @Valid @RequestBody MemberRequest request) {
         MemberResponse created = householdService.addMember(id, request);
         return ResponseEntity.created(locationOf(created.id())).body(created);
     }
@@ -62,6 +60,9 @@ public class HouseholdController {
 
     /** Az aktuális kérés URL-jéhez fűzi az új azonosítót: POST /api/households -> /api/households/42. */
     private static URI locationOf(Long id) {
-        return ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        return ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(id)
+                .toUri();
     }
 }

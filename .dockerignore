@@ -1,0 +1,14 @@
+# Csak a buildhez szükséges fájlok kerüljenek a build-kontextusba (gyorsabb, és nem szivárog ki semmi).
+target/
+.git/
+.github/
+.idea/
+.vscode/
+notes/
+http/
+docs/
+*.iml
+*.md
+compose.yaml
+Dockerfile
+.dockerignore

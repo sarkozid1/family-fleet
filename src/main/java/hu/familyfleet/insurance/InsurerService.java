@@ -4,12 +4,11 @@ import hu.familyfleet.common.exception.ConflictException;
 import hu.familyfleet.common.exception.ResourceNotFoundException;
 import hu.familyfleet.insurance.dto.InsurerRequest;
 import hu.familyfleet.insurance.dto.InsurerResponse;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,11 +18,14 @@ public class InsurerService {
     private final InsurerRepository insurerRepository;
 
     public List<InsurerResponse> findAll() {
-        return insurerRepository.findAll(Sort.by("name")).stream().map(InsurerResponse::from).toList();
+        return insurerRepository.findAll(Sort.by("name")).stream()
+                .map(InsurerResponse::from)
+                .toList();
     }
 
     public InsurerResponse findById(Long id) {
-        return insurerRepository.findById(id)
+        return insurerRepository
+                .findById(id)
                 .map(InsurerResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("Biztosító", id));
     }
@@ -32,7 +34,8 @@ public class InsurerService {
     @Transactional
     public InsurerResponse create(InsurerRequest request) {
         if (insurerRepository.existsByNameIgnoreCase(request.name().strip())) {
-            throw new ConflictException("Ilyen nevű biztosító már létezik: " + request.name().strip());
+            throw new ConflictException(
+                    "Ilyen nevű biztosító már létezik: " + request.name().strip());
         }
         Insurer insurer = insurerRepository.save(new Insurer(request.name(), request.phone(), request.website()));
         return InsurerResponse.from(insurer);

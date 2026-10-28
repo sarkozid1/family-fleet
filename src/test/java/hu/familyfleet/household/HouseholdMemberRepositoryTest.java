@@ -1,13 +1,13 @@
 package hu.familyfleet.household;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import hu.familyfleet.TestcontainersConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -39,7 +39,9 @@ class HouseholdMemberRepositoryTest {
         Household nagy = householdRepository.save(new Household("Nagy család"));
         HouseholdMember anna = memberRepository.save(new HouseholdMember(kovacs, "Anna", null));
 
-        assertThat(memberRepository.findByIdAndHouseholdId(anna.getId(), kovacs.getId())).isPresent();
-        assertThat(memberRepository.findByIdAndHouseholdId(anna.getId(), nagy.getId())).isEmpty();
+        assertThat(memberRepository.findByIdAndHouseholdId(anna.getId(), kovacs.getId()))
+                .isPresent();
+        assertThat(memberRepository.findByIdAndHouseholdId(anna.getId(), nagy.getId()))
+                .isEmpty();
     }
 }

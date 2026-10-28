@@ -1,5 +1,10 @@
 package hu.familyfleet.common;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import hu.familyfleet.TestcontainersConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,23 +15,19 @@ import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * A prod profil konfigurációja: a kötelező környezeti változókat itt property-ként adjuk meg
  * (a tényleges adatbázis-kapcsolatot a Testcontainers {@code @ServiceConnection} adja).
  */
-@SpringBootTest(properties = {
-        "DB_URL=jdbc:postgresql://overridden-by-testcontainers/familyfleet",
-        "DB_USERNAME=unused",
-        "DB_PASSWORD=unused",
-        "MAIL_HOST=smtp.example.com",
-        "REMINDER_FROM=noreply@example.com",
-        "JWT_SECRET=prod-test-secret-0123456789abcdefghijklmnop"
-})
+@SpringBootTest(
+        properties = {
+            "DB_URL=jdbc:postgresql://overridden-by-testcontainers/familyfleet",
+            "DB_USERNAME=unused",
+            "DB_PASSWORD=unused",
+            "MAIL_HOST=smtp.example.com",
+            "REMINDER_FROM=noreply@example.com",
+            "JWT_SECRET=prod-test-secret-0123456789abcdefghijklmnop"
+        })
 @AutoConfigureMockMvc
 @ActiveProfiles("prod")
 @Import(TestcontainersConfiguration.class)

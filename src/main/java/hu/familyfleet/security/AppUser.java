@@ -1,14 +1,13 @@
 package hu.familyfleet.security;
 
 import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.Instant;
-import java.util.Locale;
-import java.util.Objects;
 
 /**
  * Bejelentkezni képes felhasználó. Nem azonos a családtaggal ({@code HouseholdMember}): egy

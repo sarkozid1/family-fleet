@@ -1,24 +1,5 @@
 package hu.familyfleet.household;
 
-import hu.familyfleet.common.exception.ResourceNotFoundException;
-import hu.familyfleet.household.dto.HouseholdRequest;
-import hu.familyfleet.household.dto.HouseholdResponse;
-import hu.familyfleet.household.dto.MemberResponse;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithMockUser;
-import hu.familyfleet.support.WebSecurityTestConfig;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-import java.util.List;
-
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,6 +7,24 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import hu.familyfleet.common.exception.ResourceNotFoundException;
+import hu.familyfleet.household.dto.HouseholdRequest;
+import hu.familyfleet.household.dto.HouseholdResponse;
+import hu.familyfleet.household.dto.MemberResponse;
+import hu.familyfleet.support.WebSecurityTestConfig;
+import java.time.Instant;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 /** Csak a webréteg: routing, JSON, validáció, hibaformátum. A service mock. */
 @Import(WebSecurityTestConfig.class)
@@ -160,9 +159,10 @@ class HouseholdControllerTest {
 
     @Test
     void listsHouseholds() throws Exception {
-        given(householdService.findAll()).willReturn(List.of(
-                new HouseholdResponse(1L, "A család", CREATED_AT),
-                new HouseholdResponse(2L, "B család", CREATED_AT)));
+        given(householdService.findAll())
+                .willReturn(List.of(
+                        new HouseholdResponse(1L, "A család", CREATED_AT),
+                        new HouseholdResponse(2L, "B család", CREATED_AT)));
 
         mockMvc.perform(get("/api/households"))
                 .andExpect(status().isOk())
@@ -172,8 +172,9 @@ class HouseholdControllerTest {
 
     @Test
     void constraintViolationReturns409WithoutSqlDetails() throws Exception {
-        given(householdService.update(eq(1L), any())).willThrow(new DataIntegrityViolationException(
-                "could not execute statement [ERROR: duplicate key value violates unique constraint \"x\"]"));
+        given(householdService.update(eq(1L), any()))
+                .willThrow(new DataIntegrityViolationException(
+                        "could not execute statement [ERROR: duplicate key value violates unique constraint \"x\"]"));
 
         mockMvc.perform(put("/api/households/1")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -1,10 +1,9 @@
 package hu.familyfleet.deadline;
 
-import org.springframework.data.jpa.domain.Specification;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Dinamikus szűrés Specification-ökkel: csak a megadott feltételek kerülnek a WHERE-be.

@@ -1,5 +1,15 @@
 package hu.familyfleet.reminder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+
 import hu.familyfleet.deadline.Deadline;
 import hu.familyfleet.deadline.DeadlineRepository;
 import hu.familyfleet.deadline.DeadlineType;
@@ -10,6 +20,12 @@ import hu.familyfleet.household.HouseholdRepository;
 import hu.familyfleet.reminder.HouseholdReminderSender.Outcome;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleType;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,23 +37,6 @@ import org.springframework.mail.MailSendException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-
 @ExtendWith(MockitoExtension.class)
 class HouseholdReminderSenderTest {
 
@@ -47,12 +46,16 @@ class HouseholdReminderSenderTest {
 
     @Mock
     private ReminderLogRepository logRepository;
+
     @Mock
     private DeadlineRepository deadlineRepository;
+
     @Mock
     private HouseholdRepository householdRepository;
+
     @Mock
     private HouseholdMemberRepository memberRepository;
+
     @Mock
     private MailSender mailSender;
 
@@ -67,17 +70,24 @@ class HouseholdReminderSenderTest {
     void setUp() {
         ReminderProperties properties =
                 new ReminderProperties(true, "0 0 7 * * *", List.of(30, 7, 1), "Family Fleet <noreply@test>");
-        sender = new HouseholdReminderSender(logRepository, deadlineRepository, householdRepository, memberRepository,
-                mailSender, properties, CLOCK);
+        sender = new HouseholdReminderSender(
+                logRepository,
+                deadlineRepository,
+                householdRepository,
+                memberRepository,
+                mailSender,
+                properties,
+                CLOCK);
     }
 
     @Test
     void sendsOneMailToEveryMemberWithEmailAfterLoggingTheDay() {
         given(deadlineRepository.findOpenDueOn(1L, DUE_DATES)).willReturn(List.of(inspection));
-        given(memberRepository.findByHouseholdIdOrderByNameAsc(1L)).willReturn(List.of(
-                new HouseholdMember(household, "Anna", "anna@example.com"),
-                new HouseholdMember(household, "Bence", null),
-                new HouseholdMember(household, "Csilla", "csilla@example.com")));
+        given(memberRepository.findByHouseholdIdOrderByNameAsc(1L))
+                .willReturn(List.of(
+                        new HouseholdMember(household, "Anna", "anna@example.com"),
+                        new HouseholdMember(household, "Bence", null),
+                        new HouseholdMember(household, "Csilla", "csilla@example.com")));
         given(householdRepository.findById(1L)).willReturn(Optional.of(household));
 
         Outcome outcome = sender.send(1L, TODAY, DUE_DATES);

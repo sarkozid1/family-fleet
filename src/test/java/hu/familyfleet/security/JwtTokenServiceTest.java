@@ -1,19 +1,18 @@
 package hu.familyfleet.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidationException;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Kibocsátás és ellenőrzés ugyanazzal a konfigurációval, Spring-kontextus nélkül, rögzített órákkal. */
 class JwtTokenServiceTest {
@@ -43,15 +42,18 @@ class JwtTokenServiceTest {
         String token = service(ISSUED).issue(user).value();
 
         // A JwtTimestampValidator alapból 60 mp óraeltérést (clock skew) enged meg.
-        assertThatThrownBy(() -> decoder(ISSUED.plus(Duration.ofHours(1)).plusSeconds(61)).decode(token))
+        assertThatThrownBy(() -> decoder(ISSUED.plus(Duration.ofHours(1)).plusSeconds(61))
+                        .decode(token))
                 .isInstanceOf(JwtValidationException.class);
     }
 
     @Test
     void tokenSignedWithAnotherKeyIsRejected() {
-        JwtProperties otherKey = new JwtProperties("another-secret-0123456789abcdefghijklmn", "family-fleet", Duration.ofHours(1));
+        JwtProperties otherKey =
+                new JwtProperties("another-secret-0123456789abcdefghijklmn", "family-fleet", Duration.ofHours(1));
         String forged = new JwtTokenService(config.jwtEncoder(config.jwtSigningKey(otherKey)), otherKey, fixed(ISSUED))
-                .issue(user).value();
+                .issue(user)
+                .value();
 
         assertThatThrownBy(() -> decoder(ISSUED).decode(forged))
                 .isInstanceOf(org.springframework.security.oauth2.jwt.BadJwtException.class);
@@ -60,8 +62,10 @@ class JwtTokenServiceTest {
     @Test
     void tokenFromAnotherIssuerIsRejected() {
         JwtProperties otherIssuer = new JwtProperties(PROPERTIES.secret(), "valaki-mas", Duration.ofHours(1));
-        String token = new JwtTokenService(config.jwtEncoder(config.jwtSigningKey(otherIssuer)), otherIssuer, fixed(ISSUED))
-                .issue(user).value();
+        String token = new JwtTokenService(
+                        config.jwtEncoder(config.jwtSigningKey(otherIssuer)), otherIssuer, fixed(ISSUED))
+                .issue(user)
+                .value();
 
         assertThatThrownBy(() -> decoder(ISSUED).decode(token)).isInstanceOf(JwtValidationException.class);
     }
@@ -80,7 +84,8 @@ class JwtTokenServiceTest {
 
     @SuppressWarnings("deprecation")
     private static AppUser user(Long id, Role role) {
-        AppUser user = new AppUser("Admin@Example.com", NoOpPasswordEncoder.getInstance().encode("x"), "Admin", role);
+        AppUser user = new AppUser(
+                "Admin@Example.com", NoOpPasswordEncoder.getInstance().encode("x"), "Admin", role);
         ReflectionTestUtils.setField(user, "id", id);
         return user;
     }
