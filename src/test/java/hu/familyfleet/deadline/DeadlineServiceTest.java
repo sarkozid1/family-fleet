@@ -7,6 +7,7 @@ import hu.familyfleet.deadline.dto.CompleteDeadlineResponse;
 import hu.familyfleet.deadline.dto.DeadlineCreateRequest;
 import hu.familyfleet.deadline.dto.DeadlineResponse;
 import hu.familyfleet.household.Household;
+import hu.familyfleet.household.HouseholdAccessGuard;
 import hu.familyfleet.household.HouseholdMember;
 import hu.familyfleet.household.HouseholdMemberRepository;
 import hu.familyfleet.household.HouseholdRepository;
@@ -54,6 +55,8 @@ class DeadlineServiceTest {
     private HouseholdMemberRepository memberRepository;
     @Mock
     private InsurancePolicyRepository policyRepository;
+    @Mock
+    private HouseholdAccessGuard accessGuard;
 
     private DeadlineService service;
 
@@ -64,7 +67,7 @@ class DeadlineServiceTest {
     void setUp() {
         DeadlineGenerator generator = new DeadlineGenerator(deadlineRepository, vehicleRepository, policyRepository, CLOCK);
         service = new DeadlineService(deadlineRepository, householdRepository, vehicleRepository, memberRepository,
-                policyRepository, generator, CLOCK);
+                policyRepository, generator, CLOCK, accessGuard);
     }
 
     @Test
@@ -176,7 +179,6 @@ class DeadlineServiceTest {
 
     @Test
     void upcomingLooksAheadFromToday() {
-        given(householdRepository.existsById(1L)).willReturn(true);
         given(deadlineRepository.findOpenDueUntil(1L, LocalDate.of(2026, 11, 4))).willReturn(List.of(
                 new Deadline(household, DeadlineType.OIL_CHANGE, LocalDate.of(2026, 10, 20), vehicle, null, null)));
 
@@ -188,7 +190,6 @@ class DeadlineServiceTest {
 
     @Test
     void searchRejectsInvertedDateRange() {
-        given(householdRepository.existsById(1L)).willReturn(true);
 
         assertThatThrownBy(() -> service.search(1L, null, null, LocalDate.of(2027, 1, 1), LocalDate.of(2026, 1, 1), null))
                 .isInstanceOf(BusinessRuleException.class);

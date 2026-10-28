@@ -1,10 +1,13 @@
 ### Jármű API – IntelliJ HTTP Client
 # Előfeltétel: futó alkalmazás. Az első két kérés létrehoz egy háztartást és egy tagot.
 
+# Előfeltétel: az auth.http bejelentkezése (a "token" változót tölti).
+
 @baseUrl = http://localhost:8080
 
 ### Háztartás a járművekhez
 POST {{baseUrl}}/api/households
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -15,6 +18,7 @@ Content-Type: application/json
 
 ### Családtag (tulajdonos)
 POST {{baseUrl}}/api/households/{{householdId}}/members
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -26,6 +30,7 @@ Content-Type: application/json
 
 ### Jármű felvétele (új formátumú rendszám) -> 201 + Location
 POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -46,6 +51,7 @@ Content-Type: application/json
 
 ### Második jármű (régi formátumú rendszám)
 POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -57,15 +63,19 @@ Content-Type: application/json
 
 ### Járművek listája (lapozott, alapból rendszám szerint)
 GET {{baseUrl}}/api/households/{{householdId}}/vehicles?page=0&size=10
+Authorization: Bearer {{token}}
 
 ### Lista márka szerint csökkenő sorrendben
 GET {{baseUrl}}/api/households/{{householdId}}/vehicles?sort=brand,desc
+Authorization: Bearer {{token}}
 
 ### Egy jármű
 GET {{baseUrl}}/api/vehicles/{{vehicleId}}
+Authorization: Bearer {{token}}
 
 ### Módosítás a letöltött verzióval -> 200, a verzió nő
 PUT {{baseUrl}}/api/vehicles/{{vehicleId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -81,6 +91,7 @@ Content-Type: application/json
 
 ### HIBA: ugyanaz a régi verzió még egyszer -> 409 (optimista zárolás)
 PUT {{baseUrl}}/api/vehicles/{{vehicleId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -94,6 +105,7 @@ Content-Type: application/json
 
 ### HIBA: duplikált rendszám ugyanabban a háztartásban -> 409
 POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -105,6 +117,7 @@ Content-Type: application/json
 
 ### HIBA: érvénytelen rendszám -> 400
 POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -116,6 +129,8 @@ Content-Type: application/json
 
 ### HIBA: ismeretlen rendezési mező -> 400
 GET {{baseUrl}}/api/households/{{householdId}}/vehicles?sort=nincsIlyen
+Authorization: Bearer {{token}}
 
 ### Törlés -> 204 (ha nincs kötvénye és határideje; különben 409)
 DELETE {{baseUrl}}/api/vehicles/{{vehicleId}}
+Authorization: Bearer {{token}}

@@ -2,6 +2,9 @@ package hu.familyfleet.vehicle;
 
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
+import hu.familyfleet.support.TestAuth;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.web.context.WebApplicationContext;
 import hu.familyfleet.deadline.Deadline;
 import hu.familyfleet.deadline.DeadlineRepository;
 import hu.familyfleet.deadline.DeadlineType;
@@ -15,7 +18,6 @@ import hu.familyfleet.insurance.PolicyType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,12 +33,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** Végponttól végpontig a valódi adatbázissal; minden teszt saját háztartást hoz létre. */
 @SpringBootTest
-@AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class VehicleApiIntegrationTest {
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void authenticate() {
+        mockMvc = TestAuth.mockMvcAsNewUser(context);
+    }
 
     @Autowired
     private VehicleRepository vehicleRepository;

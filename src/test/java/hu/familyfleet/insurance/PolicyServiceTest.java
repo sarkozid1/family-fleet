@@ -4,6 +4,7 @@ import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.common.exception.ConflictException;
 import hu.familyfleet.common.exception.ResourceNotFoundException;
 import hu.familyfleet.household.Household;
+import hu.familyfleet.household.HouseholdAccessGuard;
 import hu.familyfleet.insurance.dto.PolicyCreateRequest;
 import hu.familyfleet.insurance.dto.PolicyResponse;
 import hu.familyfleet.vehicle.Vehicle;
@@ -49,6 +50,9 @@ class PolicyServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private HouseholdAccessGuard accessGuard;
+
     private PolicyService policyService;
 
     private final Vehicle vehicle = new Vehicle(new Household("Teszt család"), VehicleType.CAR, "Skoda", "Octavia", "ABC123");
@@ -56,7 +60,7 @@ class PolicyServiceTest {
 
     @BeforeEach
     void setUp() {
-        policyService = new PolicyService(policyRepository, insurerRepository, vehicleRepository, CLOCK, eventPublisher);
+        policyService = new PolicyService(policyRepository, insurerRepository, vehicleRepository, CLOCK, eventPublisher, accessGuard);
     }
 
     @Test

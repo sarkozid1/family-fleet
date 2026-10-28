@@ -38,6 +38,21 @@ VS Code REST Client bővítménye is nagyrészt érti). A hibák egységesen RFC
 `application/problem+json` formában érkeznek, benne a `requestId`-vel, amely a válasz
 `X-Request-Id` fejlécében és minden hozzá tartozó logsorban is szerepel.
 
+### Hitelesítés
+
+Az `/api/**` végpontok (a regisztráció és a bejelentkezés kivételével) JWT-t várnak:
+
+1. `POST /api/auth/register` – `{ "email", "password" (8–72 karakter), "displayName" }`
+2. `POST /api/auth/login` – a válasz `accessToken` mezője egy 1 óráig érvényes token
+3. minden további kérés: `Authorization: Bearer <accessToken>`
+
+Mindenki csak a saját háztartásait látja; idegen háztartás adatai 404-et adnak (lásd
+[ADR-0003](docs/adr/0003-authentication-and-authorization.md)). Biztosítót felvenni csak
+`ADMIN` szerepkörrel lehet, ezt adatbázisból lehet megadni
+(`UPDATE app_user SET role = 'ADMIN' WHERE email = '...'`). Az [`http/auth.http`](http/auth.http)
+fájlt kell elsőként futtatni, az eltárolja a tokent a többi kéréshez. A Swagger UI-ban az
+**Authorize** gombbal adható meg a token.
+
 | Cím | Mi ez |
 |---|---|
 | `http://localhost:8080/swagger-ui.html` | Swagger UI, interaktív API-dokumentáció |
@@ -54,8 +69,8 @@ VS Code REST Client bővítménye is nagyrészt érti). A hibák egységesen RFC
 | `prod` | élesben: `SPRING_PROFILES_ACTIVE=prod` | JSON (ECS) logok, csak `health` és `info`, Swagger alapból kikapcsolva, minden titok környezeti változóból |
 
 A `prod` profil kötelező környezeti változói (alapérték nélkül, hiányukban az alkalmazás nem indul):
-`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `MAIL_HOST`, `REMINDER_FROM`.
-Opcionálisak: `MAIL_PORT` (587), `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SMTP_AUTH`,
+`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `MAIL_HOST`, `REMINDER_FROM`, `JWT_SECRET` (legalább 32 karakter).
+Opcionálisak: `JWT_TTL` (PT1H), `MAIL_PORT` (587), `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SMTP_AUTH`,
 `MAIL_SMTP_STARTTLS`, `REMINDER_ENABLED`, `REMINDER_CRON`, `API_DOCS_ENABLED` (false).
 A teljes lista az [`application-prod.yml`](src/main/resources/application-prod.yml) fejlécében.
 
@@ -80,6 +95,7 @@ Windows alatt a `./mvnw` helyett `.\mvnw.cmd` kell.
 
 - Java 21, Spring Boot 4.1
 - Spring Web MVC, Spring Data JPA (Hibernate), Bean Validation
+- Spring Security: OAuth2 Resource Server (JWT, HS256), BCrypt
 - PostgreSQL 18, Flyway (sémamigrációk)
 - Spring Mail + ütemezett feladat (`@Scheduled`), Mailpit fejlesztői SMTP
 - Spring Boot Actuator, strukturált (ECS) logolás, springdoc-openapi (Swagger UI)
@@ -95,7 +111,8 @@ src/main/java/hu/familyfleet
 ├── vehicle/     járművek
 ├── insurance/   biztosítók és kötvények
 ├── deadline/    határidők, generálási és ismétlődési szabályok
-└── reminder/    napi emlékeztető e-mail
+├── reminder/    napi emlékeztető e-mail
+└── security/    felhasználók, regisztráció, bejelentkezés, JWT, biztonsági szabályok
 src/main/resources/db/migration   Flyway-migrációk (V1, V2, ...)
 ```
 

@@ -5,6 +5,7 @@ import hu.familyfleet.common.exception.ConflictException;
 import hu.familyfleet.common.exception.ResourceNotFoundException;
 import hu.familyfleet.common.web.PageResponse;
 import hu.familyfleet.household.Household;
+import hu.familyfleet.household.HouseholdAccessGuard;
 import hu.familyfleet.household.HouseholdMember;
 import hu.familyfleet.household.HouseholdMemberRepository;
 import hu.familyfleet.household.HouseholdRepository;
@@ -27,9 +28,11 @@ public class VehicleService {
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final HouseholdAccessGuard accessGuard;
 
     @Transactional
     public VehicleResponse create(Long householdId, VehicleCreateRequest request) {
+        accessGuard.requireHousehold(householdId);
         Household household = householdRepository.findById(householdId)
                 .orElseThrow(() -> new ResourceNotFoundException("Háztartás", householdId));
         ensurePlateIsFree(householdId, request.licensePlate(), null);
@@ -47,9 +50,7 @@ public class VehicleService {
     }
 
     public PageResponse<VehicleResponse> findByHousehold(Long householdId, Pageable pageable) {
-        if (!householdRepository.existsById(householdId)) {
-            throw new ResourceNotFoundException("Háztartás", householdId);
-        }
+        accessGuard.requireHousehold(householdId);
         return PageResponse.from(vehicleRepository.findByHouseholdId(householdId, pageable), VehicleResponse::from);
     }
 
@@ -92,7 +93,10 @@ public class VehicleService {
     }
 
     private Vehicle getVehicle(Long id) {
-        return vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Jármű", id));
+        Vehicle vehicle = vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Jármű", id));
+        // Idegen háztartás járműve ugyanúgy "nem található", mint a nem létező (ADR-0003).
+        accessGuard.requireAccess(vehicle.getHousehold().getId(), "Jármű", id);
+        return vehicle;
     }
 
     /**

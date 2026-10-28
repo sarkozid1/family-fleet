@@ -5,6 +5,7 @@ import hu.familyfleet.household.dto.HouseholdRequest;
 import hu.familyfleet.household.dto.HouseholdResponse;
 import hu.familyfleet.household.dto.MemberRequest;
 import hu.familyfleet.household.dto.MemberResponse;
+import hu.familyfleet.security.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -23,15 +24,22 @@ public class HouseholdService {
 
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository memberRepository;
+    private final HouseholdAccessRepository accessRepository;
+    private final AppUserRepository userRepository;
+    private final HouseholdAccessGuard accessGuard;
 
+    /** A létrehozó automatikusan hozzáférést kap az új háztartáshoz. */
     @Transactional
     public HouseholdResponse create(HouseholdRequest request) {
         Household household = householdRepository.save(new Household(request.name()));
+        // getReferenceById: nem tölti be a felhasználót, csak az idegen kulcshoz kell a proxy.
+        accessRepository.save(new HouseholdAccess(userRepository.getReferenceById(accessGuard.currentUserId()), household));
         return HouseholdResponse.from(household);
     }
 
+    /** Csak azok a háztartások, amelyekhez a bejelentkezett felhasználó hozzáfér. */
     public List<HouseholdResponse> findAll() {
-        return householdRepository.findAll(Sort.by("name", "id")).stream()
+        return householdRepository.findAccessibleBy(accessGuard.currentUserId(), Sort.by("name", "id")).stream()
                 .map(HouseholdResponse::from)
                 .toList();
     }
@@ -56,23 +64,23 @@ public class HouseholdService {
         return MemberResponse.from(member);
     }
 
-    /** Nem létező háztartásnál 404, nem üres lista: a kliens így meg tudja különböztetni a két esetet. */
+    /** Nem létező (vagy idegen) háztartásnál 404, nem üres lista: a kliens így meg tudja különböztetni a két esetet. */
     public List<MemberResponse> findMembers(Long householdId) {
-        if (!householdRepository.existsById(householdId)) {
-            throw new ResourceNotFoundException("Háztartás", householdId);
-        }
+        accessGuard.requireHousehold(householdId);
         return memberRepository.findByHouseholdIdOrderByNameAsc(householdId).stream()
                 .map(MemberResponse::from)
                 .toList();
     }
 
     public MemberResponse findMember(Long householdId, Long memberId) {
+        accessGuard.requireHousehold(householdId);
         return memberRepository.findByIdAndHouseholdId(memberId, householdId)
                 .map(MemberResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("Családtag", memberId));
     }
 
     private Household getHousehold(Long id) {
+        accessGuard.requireHousehold(id);
         return householdRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Háztartás", id));
     }

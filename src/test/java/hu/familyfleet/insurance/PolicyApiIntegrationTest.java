@@ -2,10 +2,13 @@ package hu.familyfleet.insurance;
 
 import com.jayway.jsonpath.JsonPath;
 import hu.familyfleet.TestcontainersConfiguration;
+import hu.familyfleet.security.Role;
+import hu.familyfleet.support.TestAuth;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.web.context.WebApplicationContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,15 +22,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class PolicyApiIntegrationTest {
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
 
+    @BeforeEach
+    void authenticate() {
+        mockMvc = TestAuth.mockMvcAsNewUser(context);
+    }
+
     @Test
-    void seededInsurersAreListedAndNewOneCanBeAdded() throws Exception {
+    void seededInsurersAreListedAndOnlyAdminCanAddNewOne() throws Exception {
         mockMvc.perform(get("/api/insurers"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].name", hasItem("Allianz Hungária")));
@@ -36,11 +45,19 @@ class PolicyApiIntegrationTest {
         mockMvc.perform(post("/api/insurers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
+                                { "name": "%s" }
+                                """.formatted(name)))
+                .andExpect(status().isForbidden());
+
+        MockMvc admin = TestAuth.mockMvcAs(context, Role.ADMIN);
+        admin.perform(post("/api/insurers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                                 { "name": "%s", "phone": "+36 1 234 5678", "website": "https://pelda.hu" }
                                 """.formatted(name)))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/insurers")
+        admin.perform(post("/api/insurers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "name": "%s" }

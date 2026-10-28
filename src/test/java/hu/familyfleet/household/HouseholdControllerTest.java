@@ -7,6 +7,10 @@ import hu.familyfleet.household.dto.MemberResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import hu.familyfleet.support.WebSecurityTestConfig;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -24,6 +28,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** Csak a webréteg: routing, JSON, validáció, hibaformátum. A service mock. */
+@Import(WebSecurityTestConfig.class)
+@WithMockUser
 @WebMvcTest(HouseholdController.class)
 class HouseholdControllerTest {
 
@@ -49,6 +55,18 @@ class HouseholdControllerTest {
                 .andExpect(header().string("Location", endsWith("/api/households/42")))
                 .andExpect(jsonPath("$.id").value(42))
                 .andExpect(jsonPath("$.name").value("Kovács család"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousRequestReturns401ProblemDetail() throws Exception {
+        mockMvc.perform(get("/api/households"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("WWW-Authenticate", "Bearer"))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(401));
+
+        verifyNoInteractions(householdService);
     }
 
     @Test

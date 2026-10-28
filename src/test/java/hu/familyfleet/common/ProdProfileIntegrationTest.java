@@ -11,6 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "DB_USERNAME=unused",
         "DB_PASSWORD=unused",
         "MAIL_HOST=smtp.example.com",
-        "REMINDER_FROM=noreply@example.com"
+        "REMINDER_FROM=noreply@example.com",
+        "JWT_SECRET=prod-test-secret-0123456789abcdefghijklmnop"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("prod")
@@ -40,8 +42,10 @@ class ProdProfileIntegrationTest {
     void exposesOnlyHealthAndInfoAndHidesApiDocs() throws Exception {
         mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
         mockMvc.perform(get("/actuator/info")).andExpect(status().isOk());
-        mockMvc.perform(get("/actuator/metrics")).andExpect(status().isNotFound());
-        mockMvc.perform(get("/actuator/loggers")).andExpect(status().isNotFound());
+        // Névtelenül a nem nyilvános útvonal 401 (azt sem áruljuk el, létezik-e), bejelentkezve 404.
+        mockMvc.perform(get("/actuator/metrics")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/actuator/metrics").with(jwt())).andExpect(status().isNotFound());
+        mockMvc.perform(get("/actuator/loggers").with(jwt())).andExpect(status().isNotFound());
         mockMvc.perform(get("/v3/api-docs")).andExpect(status().isNotFound());
     }
 

@@ -1,15 +1,19 @@
 ### Biztosító és kötvény API – IntelliJ HTTP Client
 # Előfeltétel: futó alkalmazás. Az első kérések létrehoznak egy háztartást és egy járművet.
 
+# Előfeltétel: az auth.http bejelentkezése (a "token" változót tölti).
+
 @baseUrl = http://localhost:8080
 
 ### Biztosítók listája (a V2-migráció tölti fel)
 GET {{baseUrl}}/api/insurers
+Authorization: Bearer {{token}}
 
 > {% client.global.set("insurerId", response.body[0].id); %}
 
-### Új biztosító
+### Új biztosító (csak ADMIN szerepkörrel, különben 403 – lásd auth.http)
 POST {{baseUrl}}/api/insurers
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -18,8 +22,9 @@ Content-Type: application/json
   "website": "https://pelda-biztosito.hu"
 }
 
-### HIBA: már létező név (kis/nagybetűtől függetlenül) -> 409
+### HIBA: már létező név (kis/nagybetűtől függetlenül) -> 409 (ADMIN-ként; USER-ként 403)
 POST {{baseUrl}}/api/insurers
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -28,6 +33,7 @@ Content-Type: application/json
 
 ### Háztartás
 POST {{baseUrl}}/api/households
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -38,6 +44,7 @@ Content-Type: application/json
 
 ### Jármű
 POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -51,6 +58,7 @@ Content-Type: application/json
 
 ### KGFB-kötvény (határozatlan idejű) -> 201
 POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -69,6 +77,7 @@ Content-Type: application/json
 
 ### HIBA: második, átfedő KGFB ugyanarra a járműre -> 409
 POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -81,6 +90,7 @@ Content-Type: application/json
 
 ### CASCO a KGFB mellé -> 201
 POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -94,6 +104,7 @@ Content-Type: application/json
 
 ### HIBA: záró dátum a kezdő előtt -> 400
 POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -107,12 +118,15 @@ Content-Type: application/json
 
 ### A jármű kötvényei (legfrissebb elöl)
 GET {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Authorization: Bearer {{token}}
 
 ### Egy kötvény
 GET {{baseUrl}}/api/policies/{{policyId}}
+Authorization: Bearer {{token}}
 
 ### Kötvény lezárása (a letöltött verzióval)
 PUT {{baseUrl}}/api/policies/{{policyId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {

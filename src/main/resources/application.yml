@@ -34,6 +34,11 @@ spring:
 app:
   # Időzóna a "mai nap" számításához és az ütemezéshez
   time-zone: Europe/Budapest
+  security:
+    jwt:
+      # A titok (secret) szándékosan nincs itt: dev-ben az application-dev.yml, élesben a JWT_SECRET adja.
+      issuer: family-fleet
+      ttl: PT1H
   reminder:
     # Napi emlékeztető: minden reggel 7-kor, 30/7/1 nappal az esedékesség előtt
     enabled: true

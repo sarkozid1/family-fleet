@@ -7,6 +7,9 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
+import hu.familyfleet.support.WebSecurityTestConfig;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -22,10 +25,13 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@Import(WebSecurityTestConfig.class)
+@WithMockUser
 @WebMvcTest({InsurerController.class, PolicyController.class})
 class InsuranceControllerTest {
 
@@ -41,6 +47,7 @@ class InsuranceControllerTest {
     private PolicyService policyService;
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createInsurerReturns201() throws Exception {
         given(insurerService.create(any())).willReturn(new InsurerResponse(11L, "Új Biztosító", null, null));
 
@@ -54,6 +61,21 @@ class InsuranceControllerTest {
     }
 
     @Test
+    void regularUserCannotCreateInsurer() throws Exception {
+        mockMvc.perform(post("/api/insurers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "name": "Új Biztosító" }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Nincs jogosultság"));
+
+        verifyNoInteractions(insurerService);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void insurerWebsiteMustBeHttpUrl() throws Exception {
         mockMvc.perform(post("/api/insurers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -65,6 +87,7 @@ class InsuranceControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void duplicateInsurerReturns409() throws Exception {
         given(insurerService.create(any())).willThrow(new ConflictException("Ilyen nevű biztosító már létezik: UNIQA"));
 

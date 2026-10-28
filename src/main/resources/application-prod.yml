@@ -2,8 +2,8 @@
 # Éles környezet. Minden titok és környezetfüggő érték környezeti változóból jön; a
 # kötelezőknek szándékosan nincs alapértéke, így hiányuk esetén az alkalmazás el sem indul.
 #
-# Kötelező:  DB_URL, DB_USERNAME, DB_PASSWORD, MAIL_HOST, REMINDER_FROM
-# Opcionális: MAIL_PORT (587), MAIL_USERNAME, MAIL_PASSWORD, MAIL_SMTP_AUTH (true),
+# Kötelező:  DB_URL, DB_USERNAME, DB_PASSWORD, MAIL_HOST, REMINDER_FROM, JWT_SECRET (min. 32 karakter)
+# Opcionális: JWT_TTL (PT1H), MAIL_PORT (587), MAIL_USERNAME, MAIL_PASSWORD, MAIL_SMTP_AUTH (true),
 #             MAIL_SMTP_STARTTLS (true), REMINDER_CRON, REMINDER_ENABLED (true),
 #             API_DOCS_ENABLED (false)
 # =========================================================
@@ -22,6 +22,10 @@ spring:
       mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
 
 app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      ttl: ${JWT_TTL:PT1H}
   reminder:
     enabled: ${REMINDER_ENABLED:true}
     cron: ${REMINDER_CRON:0 0 7 * * *}

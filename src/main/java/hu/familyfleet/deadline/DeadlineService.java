@@ -8,6 +8,7 @@ import hu.familyfleet.deadline.dto.CompleteDeadlineResponse;
 import hu.familyfleet.deadline.dto.DeadlineCreateRequest;
 import hu.familyfleet.deadline.dto.DeadlineResponse;
 import hu.familyfleet.household.Household;
+import hu.familyfleet.household.HouseholdAccessGuard;
 import hu.familyfleet.household.HouseholdMember;
 import hu.familyfleet.household.HouseholdMemberRepository;
 import hu.familyfleet.household.HouseholdRepository;
@@ -38,14 +39,19 @@ public class DeadlineService {
     private final InsurancePolicyRepository policyRepository;
     private final DeadlineGenerator generator;
     private final Clock clock;
+    private final HouseholdAccessGuard accessGuard;
 
     @Transactional
     public DeadlineResponse create(Long householdId, DeadlineCreateRequest request) {
+        accessGuard.requireHousehold(householdId);
         Household household = householdRepository.findById(householdId)
                 .orElseThrow(() -> new ResourceNotFoundException("Háztartás", householdId));
-        Vehicle vehicle = reference(request.vehicleId(), vehicleRepository::findById, "jármű");
-        HouseholdMember member = reference(request.memberId(), memberRepository::findById, "családtag");
-        InsurancePolicy policy = reference(request.policyId(), policyRepository::findById, "kötvény");
+        Vehicle vehicle = reference(household, request.vehicleId(), vehicleRepository::findById,
+                Vehicle::getHousehold, "jármű");
+        HouseholdMember member = reference(household, request.memberId(), memberRepository::findById,
+                HouseholdMember::getHousehold, "családtag");
+        InsurancePolicy policy = reference(household, request.policyId(), policyRepository::findById,
+                p -> p.getVehicle().getHousehold(), "kötvény");
 
         LocalDate dueDate = Optional.ofNullable(request.dueDate())
                 .or(() -> generator.defaultDueDate(request.type(), policy))
@@ -123,22 +129,27 @@ public class DeadlineService {
     }
 
     private Deadline getDeadline(Long id) {
-        return deadlineRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Határidő", id));
+        Deadline deadline = deadlineRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Határidő", id));
+        accessGuard.requireAccess(deadline.getHousehold().getId(), "Határidő", id);
+        return deadline;
     }
 
     private void ensureHouseholdExists(Long householdId) {
-        if (!householdRepository.existsById(householdId)) {
-            throw new ResourceNotFoundException("Háztartás", householdId);
-        }
+        accessGuard.requireHousehold(householdId);
     }
 
-    /** A törzsben hivatkozott, nem létező elem a kérés hibája: 400. */
-    private static <T> T reference(Long id, Function<Long, Optional<T>> finder, String name) {
+    /**
+     * A törzsben hivatkozott elem: nem létező vagy másik háztartáshoz tartozó → ugyanaz a 400-as
+     * üzenet, hogy egy idegen azonosító létezése ne derüljön ki (ADR-0003).
+     */
+    private static <T> T reference(Household household, Long id, Function<Long, Optional<T>> finder,
+                                   Function<T, Household> householdOf, String name) {
         if (id == null) {
             return null;
         }
-        return finder.apply(id).orElseThrow(
-                () -> new BusinessRuleException("Nem létező %s (id: %d).".formatted(name, id)));
+        return finder.apply(id)
+                .filter(entity -> household.isSameAs(householdOf.apply(entity)))
+                .orElseThrow(() -> new BusinessRuleException("Nem létező %s (id: %d).".formatted(name, id)));
     }
 
     private LocalDate today() {

@@ -1,0 +1,49 @@
+### Hitelesítés – IntelliJ HTTP Client
+# EZT FUTTASD ELŐSZÖR: a login a tokent a "token" globális változóba menti,
+# a többi .http fájl minden kérése ezzel küldi az Authorization fejlécet.
+
+@baseUrl = http://localhost:8080
+
+### Regisztráció (egyszer; ha már létezik a cím -> 409, ez nem baj)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "anna@example.com",
+  "password": "nagyon-titkos-1",
+  "displayName": "Kovács Anna"
+}
+
+### Bejelentkezés -> JWT
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "anna@example.com",
+  "password": "nagyon-titkos-1"
+}
+
+> {%
+    client.test("200 OK", () => client.assert(response.status === 200));
+    client.global.set("token", response.body.accessToken);
+%}
+
+### A saját fiók
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### HIBA: rossz jelszó -> 401 (ugyanaz az üzenet, mint nem létező e-mailnél)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "anna@example.com",
+  "password": "rossz-jelszo"
+}
+
+### HIBA: token nélkül -> 401
+GET {{baseUrl}}/api/households
+
+### Admin szerepkör (pl. biztosító felvételéhez) csak adatbázisból adható:
+# docker compose exec postgres psql -U familyfleet -c "UPDATE app_user SET role = 'ADMIN' WHERE email = 'anna@example.com';"
+# Utána jelentkezz be újra, hogy a token már az ADMIN szerepkört tartalmazza.
