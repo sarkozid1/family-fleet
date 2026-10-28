@@ -1,0 +1,28 @@
+# =========================================================
+# Helyi fejlesztés: a Spring Boot elindítja a compose.yaml konténereit (PostgreSQL, Mailpit),
+# és a kapcsolódási adatokat is onnan veszi. Itt nincs titok, csak fejlesztői alapértékek.
+# =========================================================
+spring:
+  docker:
+    compose:
+      enabled: true
+      lifecycle-management: start-only
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    # A generált SQL a logban (a show-sql helyett a logger a helyes módszer). Csak fejlesztéskor!
+    org.hibernate.SQL: DEBUG
+    hu.familyfleet: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, loggers, flyway, mappings, scheduledtasks
+  endpoint:
+    health:
+      show-details: always

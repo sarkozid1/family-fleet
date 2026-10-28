@@ -1,0 +1,73 @@
+# =========================================================
+# Közös beállítások minden környezetre.
+# Környezetfüggő értékek: application-dev.yml (helyi fejlesztés), application-prod.yml (éles).
+# Profil nélkül a "dev" az alapértelmezett, élesben a SPRING_PROFILES_ACTIVE=prod kötelező.
+# =========================================================
+spring:
+  application:
+    name: family-fleet
+  profiles:
+    default: dev
+  jpa:
+    # A sémát a Flyway kezeli, a Hibernate induláskor csak összeveti vele az entitásokat
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  data:
+    web:
+      pageable:
+        # A kliens ne kérhessen egyszerre túl sok elemet
+        max-page-size: 100
+  docker:
+    compose:
+      # Csak a dev profil indítja a compose.yaml konténereit
+      enabled: false
+  mail:
+    host: localhost
+    port: 1025
+    default-encoding: UTF-8
+    properties:
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
+app:
+  # Időzóna a "mai nap" számításához és az ütemezéshez
+  time-zone: Europe/Budapest
+  reminder:
+    # Napi emlékeztető: minden reggel 7-kor, 30/7/1 nappal az esedékesség előtt
+    enabled: true
+    cron: "0 0 7 * * *"
+    days-before: [30, 7, 1]
+    from: "Family Fleet <noreply@familyfleet.local>"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: never
+      # /actuator/health/liveness és /readiness (konténer-orchestrátorokhoz)
+      probes:
+        enabled: true
+  health:
+    mail:
+      # Az SMTP kiesése ne tegye DOWN-ná az egész alkalmazást (az orchestrátor különben
+      # újraindítaná vagy kivenné a forgalomból); az emlékeztető a következő futáskor újrapróbál.
+      enabled: false
+  info:
+    java:
+      enabled: true
+
+logging:
+  pattern:
+    # A kérésazonosító minden logsorban (a RequestIdFilter teszi az MDC-be)
+    level: "%5p [%X{requestId:-}]"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
