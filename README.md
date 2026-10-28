@@ -11,6 +11,7 @@ határidők (műszaki vizsga, KGFB-évforduló, gépjárműadó, autópálya-mat
 - Docker Desktop (vagy más Docker-futtatókörnyezet) – az alkalmazás és a tesztek is
   konténerben futó PostgreSQL-t használnak
 - A Maven telepítése nem szükséges, a projekt Maven Wrappert (`mvnw`) használ
+- A Node.js telepítése sem szükséges: a build a frontendhez a projektbe (`frontend/node`) tölti le
 
 ## Indítás
 
@@ -29,7 +30,9 @@ Windows (PowerShell):
 .\mvnw.cmd spring-boot:run
 ```
 
-Az API alapértelmezetten a `http://localhost:8080` címen érhető el.
+Indulás után a **webes felület a `http://localhost:8080` címen** érhető el (regisztráció,
+háztartások, tagok, járművek, kötvények, határidők), az API pedig a `http://localhost:8080/api`
+alatt. A Maven a React-felületet is felépíti; az első indítás ezért egy percig is eltarthat.
 
 A compose egy Mailpit fejlesztői SMTP-szervert is indít: a napi emlékeztető-levelek
 (minden reggel 7-kor, 30/7/1 nappal az esedékesség előtt) a `http://localhost:8025`
@@ -57,11 +60,31 @@ fájlt kell elsőként futtatni, az eltárolja a tokent a többi kéréshez. A S
 
 | Cím | Mi ez |
 |---|---|
+| `http://localhost:8080` | Webes felület (React) |
 | `http://localhost:8080/swagger-ui.html` | Swagger UI, interaktív API-dokumentáció |
 | `http://localhost:8080/v3/api-docs` | OpenAPI-leírás (JSON) |
 | `http://localhost:8080/actuator/health` | Állapot (plusz `/liveness` és `/readiness`) |
 | `http://localhost:8080/actuator/info` | Verzió, build ideje, Java-verzió |
 | `http://localhost:8025` | Mailpit: az elküldött levelek |
+
+## Frontend fejlesztése
+
+A felület a [`frontend/`](frontend) mappában van: React 19, TypeScript, Vite, React Router, a
+tesztek Vitesttel és Testing Libraryvel futnak. A `./mvnw` build a frontendet is lefordítja
+(típusellenőrzéssel), teszteli, és a `target/classes/static` mappába teszi; onnan a Spring Boot
+szolgálja ki.
+
+Gyors, automatikusan frissülő fejlesztéshez indítsd el a backendet
+(`.\mvnw.cmd spring-boot:run`), majd egy második terminálban a Vite dev szervert, és nyisd meg a
+`http://localhost:5173` címet. A Vite az `/api` kéréseket a 8080-as backendre továbbítja.
+
+```powershell
+cd frontend; .\node\npm.cmd run dev
+```
+
+(A `frontend\node` mappa az első Maven-build után jön létre. Ha a Node.js telepítve van a gépen,
+a sima `npm run dev` is működik.) Csak frontend-tesztek: `.\node\npm.cmd test`. Ha csak a
+backenden dolgozol, a frontend buildje kihagyható: `.\mvnw.cmd spring-boot:run "-Dskip.npm"`.
 
 ## Profilok és konfiguráció
 
@@ -127,6 +150,7 @@ docker run -p 8080:8080 -e DB_URL=jdbc:postgresql://db:5432/familyfleet -e DB_US
 - Spring Boot Actuator, strukturált (ECS) logolás, springdoc-openapi (Swagger UI)
 - Lombok
 - Tesztek: JUnit 5, AssertJ, Mockito, Testcontainers 2
+- Frontend: React 19, TypeScript, Vite, React Router; Vitest + Testing Library
 - Minőség és szállítás: JaCoCo, Spotless (Palantir Java Format), GitHub Actions, Docker
 
 ## Projektfelépítés
@@ -141,6 +165,7 @@ src/main/java/hu/familyfleet
 ├── reminder/    napi emlékeztető e-mail
 └── security/    felhasználók, regisztráció, bejelentkezés, JWT, biztonsági szabályok
 src/main/resources/db/migration   Flyway-migrációk (V1, V2, ...)
+frontend/                         React + TypeScript webes felület (Vite)
 ```
 
 A csomagolás funkció (feature) szerinti: minden csomag a saját entitásait, repository-jait,

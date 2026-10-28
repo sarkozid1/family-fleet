@@ -2,7 +2,8 @@
 
 A Family Fleet egy Spring Boot 4 (Java 21) alapú REST API, amely családi háztartások járműveit,
 biztosításait és határidőit tartja nyilván, és e-mailben emlékeztet a közelgő határidőkre.
-Egyetlen telepíthető alkalmazás (moduláris monolit), PostgreSQL-adatbázissal.
+Egyetlen telepíthető alkalmazás (moduláris monolit), PostgreSQL-adatbázissal. A React-alapú
+webes felületet ugyanez az alkalmazás szolgálja ki statikus fájlként.
 
 A részletes döntések az [ADR-ekben](adr) vannak:
 - [ADR-0001](adr/0001-shared-deadline-entity.md): közös határidő-entitás
@@ -207,6 +208,29 @@ megkötése biztosítja, hogy ugyanarra a napra ne menjen ki két levél (idempo
 | Actuator | health, info, metrics, loggers, … | csak health és info |
 | Swagger UI | be | alapból ki |
 
+## Webes felület
+
+A `frontend/` mappában egy React + TypeScript egyoldalas alkalmazás (SPA) van, Vite-tal építve.
+
+- **Build és kiszolgálás:**
+  - A Maven (`frontend-maven-plugin`) a projektbe telepíti a Node-ot, és `npm ci`-t futtat.
+  - Típusellenőrzés után a kész fájlok a `target/classes/static` mappába kerülnek; a Spring Boot
+    onnan szolgálja ki őket a `/` címen. Egy szerver, egy port, nincs CORS.
+  - Fejlesztéskor a Vite dev szerver (5173) az `/api` kéréseket a backendre továbbítja.
+- **Útvonalak:** `HashRouter` (`/#/households/1/deadlines`). Az útvonal a böngészőben marad,
+  ezért oldalfrissítéskor is az `index.html` töltődik be, és a backendnek nem kell
+  „ismeretlen útvonal → index.html” továbbítást kezelnie.
+- **API-kliens** (`src/api`): a `fetch` köré épített vékony réteg.
+  - A tokent `Authorization: Bearer` fejlécben küldi.
+  - A hibákból `ApiError` lesz, a ProblemDetail-lel együtt; a felület ennek az üzeneteit, a
+    mezőnkénti hibákat és a kérésazonosítót jeleníti meg.
+  - 401-nél kijelentkeztet.
+- **Token:** `sessionStorage`. Lapbezáráskor törlődik; XSS ellen nem véd, ezért a felület nem
+  használ `dangerouslySetInnerHTML`-t, és minden adat szövegként jelenik meg.
+- **Felépítés:** belépés/regisztráció → háztartások → háztartás fülei (Áttekintés,
+  Határidők, Járművek és kötvények, Tagok). A típusok (`src/api/types.ts`) a backend DTO-it
+  tükrözik.
+
 ## Minőség és szállítás
 
 - **Tesztpiramis:**
@@ -214,7 +238,9 @@ megkötése biztosítja, hogy ugyanarra a napra ne menjen ki két levél (idempo
   - web slice (`@WebMvcTest`);
   - repository-tesztek (`@DataJpaTest`);
   - végponttól végpontig integrációs tesztek valódi PostgreSQL-lel és valódi JWT-vel
-    (Testcontainers, egyetlen közös konténer).
-- **CI (GitHub Actions):** minden PR-ra és a `main`-re `./mvnw verify`, vagyis tesztek, JaCoCo
-  lefedettségi kapu (80%) és Spotless formázás-ellenőrzés; utána Docker-image build.
+    (Testcontainers, egyetlen közös konténer);
+  - frontend: Vitest + Testing Library (API-kliens, segédfüggvények, belépő oldal).
+- **CI (GitHub Actions):** minden PR-ra és a `main`-re `./mvnw verify`, vagyis backend- és
+  frontend-tesztek, TypeScript-ellenőrzés, JaCoCo lefedettségi kapu (80%) és Spotless
+  formázás-ellenőrzés; utána Docker-image build.
 - **Docker:** multi-stage build, réteges JAR, nem root felhasználó, `prod` profil.
