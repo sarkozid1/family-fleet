@@ -3,6 +3,7 @@ package hu.familyfleet.common.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -49,6 +50,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<Object> handleNotFound(ResourceNotFoundException ex, WebRequest request) {
         return problem(ex, HttpStatus.NOT_FOUND, "Nem található", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    ResponseEntity<Object> handleBusinessRule(BusinessRuleException ex, WebRequest request) {
+        return problem(ex, HttpStatus.BAD_REQUEST, "Üzleti szabály megsértése", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    ResponseEntity<Object> handleConflict(ConflictException ex, WebRequest request) {
+        return problem(ex, HttpStatus.CONFLICT, "Ütközés", ex.getMessage(), request);
+    }
+
+    /** Ismeretlen rendezési mező a lapozásnál ({@code ?sort=nincsIlyen}): a kliens hibája, nem 500. */
+    @ExceptionHandler(PropertyReferenceException.class)
+    ResponseEntity<Object> handleUnknownProperty(PropertyReferenceException ex, WebRequest request) {
+        return problem(ex, HttpStatus.BAD_REQUEST, "Érvénytelen paraméter",
+                "Ismeretlen mező: " + ex.getPropertyName(), request);
     }
 
     /**

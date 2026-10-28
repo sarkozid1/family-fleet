@@ -1,13 +1,15 @@
 package hu.familyfleet.vehicle;
 
 import hu.familyfleet.common.AuditableEntity;
+import hu.familyfleet.common.exception.BusinessRuleException;
 import hu.familyfleet.household.Household;
 import hu.familyfleet.household.HouseholdMember;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import java.util.Objects;
 
 @Entity
 @Table(name = "vehicle")
@@ -23,7 +25,6 @@ public class Vehicle extends AuditableEntity {
     @JoinColumn(name = "household_id", nullable = false)
     private Household household;
 
-    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private HouseholdMember owner;
@@ -32,40 +33,78 @@ public class Vehicle extends AuditableEntity {
     @Column(nullable = false, length = 20)
     private VehicleType type;
 
-    @Setter
     @Column(nullable = false, length = 50)
     private String brand;
 
-    @Setter
     @Column(nullable = false, length = 50)
     private String model;
 
     @Column(nullable = false, length = 10)
     private String licensePlate;
 
-    @Setter
     @Column(length = 17)
     private String vin;
 
-    @Setter
     private Short productionYear;
 
-    @Setter
     @Column(nullable = false)
     private Integer currentMileage = 0;
 
     public Vehicle(Household household, VehicleType type, String brand, String model, String licensePlate) {
-        this.household = household;
-        this.type = type;
-        this.brand = brand;
-        this.model = model;
-        setLicensePlate(licensePlate);
+        this.household = Objects.requireNonNull(household, "household");
+        updateDetails(type, brand, model, null, null);
+        changeLicensePlate(licensePlate);
     }
 
     /** Egységes formátum: nagybetű, szóköz és kötőjel nélkül ("abc-123" -> "ABC123"). */
-    public void setLicensePlate(String licensePlate) {
-        this.licensePlate = licensePlate == null
-                ? null
-                : licensePlate.trim().toUpperCase().replaceAll("[\\s-]+", "");
+    public static String normalizePlate(String licensePlate) {
+        return licensePlate == null ? null : licensePlate.trim().toUpperCase().replaceAll("[\\s-]+", "");
+    }
+
+    public void changeLicensePlate(String licensePlate) {
+        String normalized = normalizePlate(licensePlate);
+        if (normalized == null || normalized.isEmpty()) {
+            throw new BusinessRuleException("A rendszám megadása kötelező.");
+        }
+        this.licensePlate = normalized;
+    }
+
+    public void updateDetails(VehicleType type, String brand, String model, String vin, Short productionYear) {
+        this.type = Objects.requireNonNull(type, "type");
+        this.brand = Objects.requireNonNull(brand, "brand").strip();
+        this.model = Objects.requireNonNull(model, "model").strip();
+        this.vin = vin == null || vin.isBlank() ? null : vin.strip().toUpperCase();
+        this.productionYear = productionYear;
+    }
+
+    /**
+     * A km-óra állása csak nőhet (vagy maradhat). A visszatekert óra tipikus csalás vagy elírás,
+     * ezért az entitás nem engedi, akárhonnan hívják.
+     */
+    public void updateMileage(int newMileage) {
+        if (newMileage < 0) {
+            throw new BusinessRuleException("A km-óra állása nem lehet negatív.");
+        }
+        if (newMileage < currentMileage) {
+            throw new BusinessRuleException(
+                    "A km-óra állása nem csökkenhet (jelenlegi: %d km, új: %d km).".formatted(currentMileage, newMileage));
+        }
+        this.currentMileage = newMileage;
+    }
+
+    /** Tulajdonos csak ugyanannak a háztartásnak a tagja lehet; {@code null} = nincs tulajdonos. */
+    public void assignOwner(HouseholdMember newOwner) {
+        if (newOwner != null && !sameHousehold(newOwner.getHousehold(), household)) {
+            throw new BusinessRuleException("A tulajdonos csak a jármű háztartásának tagja lehet.");
+        }
+        this.owner = newOwner;
+    }
+
+    /** Mentett entitásnál azonosító szerint (proxy-biztos), mentetlennél referencia szerint hasonlít. */
+    private static boolean sameHousehold(Household a, Household b) {
+        if (a.getId() != null && b.getId() != null) {
+            return a.getId().equals(b.getId());
+        }
+        return a == b;
     }
 }
