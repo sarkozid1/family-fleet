@@ -1,0 +1,143 @@
+### Határidő API – IntelliJ HTTP Client
+# Teljes forgatókönyv: háztartás -> tag -> jármű (adó-határidővel) -> KGFB-kötvény (évforduló +
+# díjfizetés) -> lista, szűrés, közelgők -> teljesítés (ismétlődés) -> elvetés.
+
+@baseUrl = http://localhost:8080
+
+### Háztartás
+POST {{baseUrl}}/api/households
+Content-Type: application/json
+
+{
+  "name": "Határidős család"
+}
+
+> {% client.global.set("householdId", response.body.id); %}
+
+### Családtag
+POST {{baseUrl}}/api/households/{{householdId}}/members
+Content-Type: application/json
+
+{
+  "name": "Kovács Anna",
+  "email": "anna@example.com"
+}
+
+> {% client.global.set("memberId", response.body.id); %}
+
+### Jármű, a következő gépjárműadó-határidővel
+POST {{baseUrl}}/api/households/{{householdId}}/vehicles
+Content-Type: application/json
+
+{
+  "type": "CAR",
+  "brand": "Skoda",
+  "model": "Octavia",
+  "licensePlate": "HAT-001",
+  "generateTaxDeadline": true
+}
+
+> {% client.global.set("vehicleId", response.body.id); %}
+
+### Biztosítók (az első azonosítóját eltesszük)
+GET {{baseUrl}}/api/insurers
+
+> {% client.global.set("insurerId", response.body[0].id); %}
+
+### KGFB-kötvény -> generál: KGFB_ANNIVERSARY + INSURANCE_PAYMENT
+POST {{baseUrl}}/api/vehicles/{{vehicleId}}/policies
+Content-Type: application/json
+
+{
+  "insurerId": {{insurerId}},
+  "policyType": "KGFB",
+  "startDate": "2026-03-01",
+  "annualPremium": 52000,
+  "paymentFrequency": "QUARTERLY"
+}
+
+### A háztartás összes határideje (esedékesség szerint)
+GET {{baseUrl}}/api/households/{{householdId}}/deadlines
+
+### Szűrés: nyitott díjfizetések egy dátumtartományban
+GET {{baseUrl}}/api/households/{{householdId}}/deadlines?status=OPEN&type=INSURANCE_PAYMENT&from=2026-01-01&to=2027-12-31
+
+> {% client.global.set("paymentId", response.body.content[0].id); %}
+
+### Közelgők a következő 30 napban (a lejártakkal együtt)
+GET {{baseUrl}}/api/households/{{householdId}}/deadlines/upcoming
+
+### Közelgők a következő 180 napban
+GET {{baseUrl}}/api/households/{{householdId}}/deadlines/upcoming?days=180
+
+### Kézi határidő: műszaki vizsga (dátum kötelező)
+POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Content-Type: application/json
+
+{
+  "type": "TECHNICAL_INSPECTION",
+  "dueDate": "2027-04-30",
+  "vehicleId": {{vehicleId}},
+  "note": "Időpont: Kovács szerviz"
+}
+
+> {% client.global.set("inspectionId", response.body.id); %}
+
+### Matrica dátum nélkül -> a következő év január 31.
+POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Content-Type: application/json
+
+{
+  "type": "MOTORWAY_VIGNETTE",
+  "vehicleId": {{vehicleId}}
+}
+
+### Jogosítvány lejárata (családtaghoz kötött)
+POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Content-Type: application/json
+
+{
+  "type": "DRIVING_LICENCE",
+  "dueDate": "2031-06-30",
+  "memberId": {{memberId}},
+  "title": "Anna jogosítványa lejár"
+}
+
+### Díjfizetés teljesítése -> létrejön a következő negyedéves fizetés
+POST {{baseUrl}}/api/deadlines/{{paymentId}}/complete
+
+### Műszaki vizsga teljesítése: a következő 2 év múlva, a teljesítés napjától
+POST {{baseUrl}}/api/deadlines/{{inspectionId}}/complete
+
+### Egy határidő
+GET {{baseUrl}}/api/deadlines/{{paymentId}}
+
+### HIBA: már teljesített határidő újra -> 409
+POST {{baseUrl}}/api/deadlines/{{paymentId}}/complete
+
+### Kézi határidő, amit elvetünk
+POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Content-Type: application/json
+
+{
+  "type": "OTHER",
+  "dueDate": "2026-12-24",
+  "title": "Téli gumi beszerzése"
+}
+
+> {% client.global.set("otherId", response.body.id); %}
+
+### Elvetés
+POST {{baseUrl}}/api/deadlines/{{otherId}}/dismiss
+
+### HIBA: kötelező kapcsolat hiányzik -> 400
+POST {{baseUrl}}/api/households/{{householdId}}/deadlines
+Content-Type: application/json
+
+{
+  "type": "OIL_CHANGE",
+  "dueDate": "2027-01-01"
+}
+
+### HIBA: days tartományon kívül -> 400
+GET {{baseUrl}}/api/households/{{householdId}}/deadlines/upcoming?days=0

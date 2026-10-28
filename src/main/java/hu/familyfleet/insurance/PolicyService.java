@@ -8,6 +8,7 @@ import hu.familyfleet.insurance.dto.PolicyUpdateRequest;
 import hu.familyfleet.vehicle.Vehicle;
 import hu.familyfleet.vehicle.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class PolicyService {
     private final InsurerRepository insurerRepository;
     private final VehicleRepository vehicleRepository;
     private final Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PolicyResponse create(Long vehicleId, PolicyCreateRequest request) {
@@ -35,7 +37,9 @@ public class PolicyService {
                 request.paymentFrequency());
 
         policy.ensureNoOverlappingKgfb(policyRepository.findByVehicleIdAndPolicyType(vehicleId, PolicyType.KGFB));
-        return PolicyResponse.from(policyRepository.save(policy), today());
+        InsurancePolicy saved = policyRepository.save(policy);
+        eventPublisher.publishEvent(new PolicyCreatedEvent(saved.getId()));
+        return PolicyResponse.from(saved, today());
     }
 
     public List<PolicyResponse> findByVehicle(Long vehicleId) {

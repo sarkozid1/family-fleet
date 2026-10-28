@@ -12,6 +12,7 @@ import hu.familyfleet.vehicle.dto.VehicleCreateRequest;
 import hu.familyfleet.vehicle.dto.VehicleResponse;
 import hu.familyfleet.vehicle.dto.VehicleUpdateRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository memberRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public VehicleResponse create(Long householdId, VehicleCreateRequest request) {
@@ -38,7 +40,10 @@ public class VehicleService {
             vehicle.updateMileage(request.currentMileage());
         }
         vehicle.assignOwner(findOwner(householdId, request.ownerId()));
-        return VehicleResponse.from(vehicleRepository.save(vehicle));
+        Vehicle saved = vehicleRepository.save(vehicle);
+        // Szinkron esemény ugyanabban a tranzakcióban: ha a határidő-generálás elbukik, a jármű sem jön létre.
+        eventPublisher.publishEvent(new VehicleCreatedEvent(saved.getId(), request.shouldGenerateTaxDeadline()));
+        return VehicleResponse.from(saved);
     }
 
     public PageResponse<VehicleResponse> findByHousehold(Long householdId, Pageable pageable) {
