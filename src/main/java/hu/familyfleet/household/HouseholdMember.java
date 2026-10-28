@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(name = "household_member")
@@ -23,11 +23,9 @@ public class HouseholdMember {
     @JoinColumn(name = "household_id", nullable = false)
     private Household household;
 
-    @Setter
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Setter
     private String email;
 
     @CreationTimestamp
@@ -35,8 +33,11 @@ public class HouseholdMember {
     private Instant createdAt;
 
     public HouseholdMember(Household household, String name, String email) {
-        this.household = household;
-        this.name = name;
-        this.email = email;
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Member name must not be blank");
+        }
+        this.household = Objects.requireNonNull(household, "household");
+        this.name = name.strip();
+        this.email = email == null || email.isBlank() ? null : email.strip().toLowerCase();
     }
 }

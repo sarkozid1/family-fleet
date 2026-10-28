@@ -29,6 +29,10 @@ Windows (PowerShell):
 
 Az API alapértelmezetten a `http://localhost:8080` címen érhető el.
 
+Kipróbálható kérések az [`http/`](http) mappában vannak (IntelliJ HTTP Client formátum, a
+VS Code REST Client bővítménye is nagyrészt érti). A hibák egységesen RFC 9457
+`application/problem+json` formában érkeznek.
+
 ## Tesztek
 
 A tesztek Testcontainers segítségével saját, eldobható PostgreSQL-konténert indítanak,
