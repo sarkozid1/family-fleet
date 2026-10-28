@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Ugyanarra a branchre érkező újabb push megszakítja a még futó, elavult futást.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Legkisebb jogosultság: a workflow csak olvassa a repót.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build és tesztek
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: JDK 21 (Temurin) és Maven-cache
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # verify = fordítás + unit és integrációs tesztek (Testcontainers a runner Dockerén)
+      #          + JaCoCo lefedettségi kapu + Spotless formázás-ellenőrzés + csomagolás
+      - name: ./mvnw verify
+        run: ./mvnw -B -ntp verify
+
+      - name: Lefedettségi riport
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          if-no-files-found: ignore
+
+      - name: Tesztriportok (hiba esetén)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
+
+  docker:
+    name: Docker image
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # A Dockerfile is ellenőrizve van: egy elrontott build-lépés már a PR-ban kiderül.
+      - name: docker build
+        run: docker build --tag family-fleet:${{ github.sha }} .
