@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface DeadlineRepository extends JpaRepository<Deadline, Long>, JpaSpecificationExecutor<Deadline> {
@@ -26,4 +27,21 @@ public interface DeadlineRepository extends JpaRepository<Deadline, Long>, JpaSp
             order by d.dueDate, d.id
             """)
     List<Deadline> findOpenDueUntil(Long householdId, LocalDate until);
+
+    /** Azok a háztartások, amelyeknek van nyitott határideje a megadott napok valamelyikén (napi emlékeztető). */
+    @Query("""
+            select distinct d.household.id from Deadline d
+            where d.status = hu.familyfleet.deadline.DeadlineStatus.OPEN
+              and d.dueDate in :dueDates
+            """)
+    List<Long> findHouseholdIdsWithOpenDueOn(Collection<LocalDate> dueDates);
+
+    @Query("""
+            select d from Deadline d
+            where d.household.id = :householdId
+              and d.status = hu.familyfleet.deadline.DeadlineStatus.OPEN
+              and d.dueDate in :dueDates
+            order by d.dueDate, d.id
+            """)
+    List<Deadline> findOpenDueOn(Long householdId, Collection<LocalDate> dueDates);
 }

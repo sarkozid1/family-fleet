@@ -10,5 +10,13 @@ services:
     volumes:
       - 'pgdata:/var/lib/postgresql'
 
+  # Fejlesztői SMTP-szerver: minden levelet elkap, semmit nem küld tovább.
+  # Webes felület: http://localhost:8025
+  mailpit:
+    image: 'axllent/mailpit:v1.31.6'
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
 volumes:
   pgdata:

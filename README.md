@@ -29,6 +29,10 @@ Windows (PowerShell):
 
 Az API alapértelmezetten a `http://localhost:8080` címen érhető el.
 
+A compose egy Mailpit fejlesztői SMTP-szervert is indít: a napi emlékeztető-levelek
+(minden reggel 7-kor, 30/7/1 nappal az esedékesség előtt) a `http://localhost:8025`
+webes felületen nézhetők meg, valódi címzetthez nem jutnak el.
+
 Kipróbálható kérések az [`http/`](http) mappában vannak (IntelliJ HTTP Client formátum, a
 VS Code REST Client bővítménye is nagyrészt érti). A hibák egységesen RFC 9457
 `application/problem+json` formában érkeznek.
@@ -55,6 +59,7 @@ Windows alatt a `./mvnw` helyett `.\mvnw.cmd` kell.
 - Java 21, Spring Boot 4.1
 - Spring Web MVC, Spring Data JPA (Hibernate), Bean Validation
 - PostgreSQL 18, Flyway (sémamigrációk)
+- Spring Mail + ütemezett feladat (`@Scheduled`), Mailpit fejlesztői SMTP
 - Lombok
 - Tesztek: JUnit 5, AssertJ, Mockito, Testcontainers 2
 
