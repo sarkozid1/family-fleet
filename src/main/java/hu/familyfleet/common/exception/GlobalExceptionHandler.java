@@ -1,6 +1,8 @@
 package hu.familyfleet.common.exception;
 
+import hu.familyfleet.common.logging.RequestIdFilter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
@@ -125,6 +127,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Unexpected error", ex);
         return problem(ex, HttpStatus.INTERNAL_SERVER_ERROR, "Váratlan hiba",
                 "Váratlan hiba történt. Kérjük, próbáld újra később.", request);
+    }
+
+    /**
+     * Minden ProblemDetail-be bekerül a kérésazonosító: a felhasználó ezzel jelentheti a hibát,
+     * mi pedig ezzel keressük meg a hozzá tartozó logsorokat.
+     */
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(
+            Exception ex, Object body, HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {
+        ResponseEntity<Object> response = super.handleExceptionInternal(ex, body, headers, statusCode, request);
+        String requestId = MDC.get(RequestIdFilter.MDC_KEY);
+        if (response != null && response.getBody() instanceof ProblemDetail problem && requestId != null) {
+            problem.setProperty("requestId", requestId);
+        }
+        return response;
     }
 
     private ResponseEntity<Object> problem(

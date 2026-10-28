@@ -5,6 +5,7 @@ import hu.familyfleet.deadline.dto.CompleteDeadlineRequest;
 import hu.familyfleet.deadline.dto.CompleteDeadlineResponse;
 import hu.familyfleet.deadline.dto.DeadlineCreateRequest;
 import hu.familyfleet.deadline.dto.DeadlineResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -20,6 +21,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 
+@Tag(name = "Határidők", description = "Határidők, közelgők, teljesítés és elvetés")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
