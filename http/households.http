@@ -1,0 +1,77 @@
+### Háztartás és családtag API – IntelliJ HTTP Client
+# Futtatás: indítsd az alkalmazást (./mvnw spring-boot:run), majd a kéréseket felülről lefelé.
+# A létrehozott azonosítókat a válaszkezelő szkriptek globális változókba mentik.
+
+@baseUrl = http://localhost:8080
+
+### Háztartás létrehozása -> 201 + Location
+POST {{baseUrl}}/api/households
+Content-Type: application/json
+
+{
+  "name": "Kovács család"
+}
+
+> {%
+    client.test("201 Created", () => client.assert(response.status === 201));
+    client.global.set("householdId", response.body.id);
+%}
+
+### Háztartások listája
+GET {{baseUrl}}/api/households
+
+### Egy háztartás
+GET {{baseUrl}}/api/households/{{householdId}}
+
+### Háztartás átnevezése
+PUT {{baseUrl}}/api/households/{{householdId}}
+Content-Type: application/json
+
+{
+  "name": "Kovács-Szabó család"
+}
+
+### Családtag felvétele
+POST {{baseUrl}}/api/households/{{householdId}}/members
+Content-Type: application/json
+
+{
+  "name": "Kovács Anna",
+  "email": "anna@example.com"
+}
+
+> {% client.global.set("memberId", response.body.id); %}
+
+### Családtag e-mail nélkül
+POST {{baseUrl}}/api/households/{{householdId}}/members
+Content-Type: application/json
+
+{
+  "name": "Kovács Bence"
+}
+
+### Tagok listája (név szerint rendezve)
+GET {{baseUrl}}/api/households/{{householdId}}/members
+
+### Egy családtag
+GET {{baseUrl}}/api/households/{{householdId}}/members/{{memberId}}
+
+### HIBA: üres név -> 400, mezőnkénti "errors" lista
+POST {{baseUrl}}/api/households
+Content-Type: application/json
+
+{
+  "name": "   "
+}
+
+### HIBA: érvénytelen e-mail -> 400
+POST {{baseUrl}}/api/households/{{householdId}}/members
+Content-Type: application/json
+
+{
+  "name": "Teszt Elek",
+  "email": "nem-email-cim"
+}
+
+### HIBA: nem létező háztartás tagjai -> 404 (nem üres lista)
+GET {{baseUrl}}/api/households/999999/members

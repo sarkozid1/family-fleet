@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
@@ -19,7 +18,6 @@ public class Household {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -28,6 +26,14 @@ public class Household {
     private Instant createdAt;
 
     public Household(String name) {
-        this.name = name;
+        rename(name);
+    }
+
+    /** A név kötelező; a felesleges szóközöket levágjuk, hogy a listázás és rendezés egységes legyen. */
+    public void rename(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Household name must not be blank");
+        }
+        this.name = name.strip();
     }
 }
