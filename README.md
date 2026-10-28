@@ -148,6 +148,7 @@ service- és controller-osztályait tartalmazza.
 
 ## Dokumentáció
 
+- [Architektúra-áttekintés](docs/architecture.md) – rétegek, adatmodell (ER-diagram), egy kérés útja
 - [Architektúra-döntések (ADR)](docs/adr) – miért döntöttünk úgy, ahogy
 
 ## Munkafolyamat
