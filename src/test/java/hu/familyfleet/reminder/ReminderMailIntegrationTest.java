@@ -32,6 +32,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,9 +83,13 @@ class ReminderMailIntegrationTest {
 
     @Test
     void sendsOneSummaryPerHouseholdAndNeverTwiceOnTheSameDay() {
+        // Egyedi címek: a közös tesztadatbázisban más tesztek háztartásai is kaphatnak levelet.
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String anna = "anna-" + suffix + "@example.com";
+        String bence = "bence-" + suffix + "@example.com";
         Household household = householdRepository.save(new Household("Emlékeztetett család"));
-        memberRepository.save(new HouseholdMember(household, "Anna", "anna@example.com"));
-        memberRepository.save(new HouseholdMember(household, "Bence", "bence@example.com"));
+        memberRepository.save(new HouseholdMember(household, "Anna", anna));
+        memberRepository.save(new HouseholdMember(household, "Bence", bence));
         Vehicle vehicle = vehicleRepository.save(new Vehicle(household, VehicleType.CAR, "Skoda", "Octavia", "EML001"));
         save(household, vehicle, DeadlineType.TECHNICAL_INSPECTION, TODAY.plusDays(7), "Kovács szerviz");
         save(household, vehicle, DeadlineType.OIL_CHANGE, TODAY.plusDays(30), null);
@@ -92,19 +98,21 @@ class ReminderMailIntegrationTest {
         ReminderService.RunResult first = reminderService.sendDailyReminders();
         ReminderService.RunResult second = reminderService.sendDailyReminders();
 
-        assertThat(first.sent()).isEqualTo(1);
-        assertThat(second.sent()).isZero();
-        assertThat(second.skipped()).isEqualTo(1);
+        assertThat(first.sent()).isGreaterThanOrEqualTo(1);
+        assertThat(second.sent()).as("ugyanarra a napra senki nem kap második levelet").isZero();
         assertThat(reminderLogRepository.existsByHouseholdIdAndReminderDate(household.getId(), TODAY)).isTrue();
 
         String messages = mailpit().get().uri("/api/v1/messages").retrieve().body(String.class);
-        assertThat((Integer) JsonPath.read(messages, "$.total")).isEqualTo(1);
-        assertThat((String) JsonPath.read(messages, "$.messages[0].Subject"))
-                .isEqualTo("Family Fleet – közelgő határidők (2026-10-28)");
-        List<String> recipients = JsonPath.read(messages, "$.messages[0].To[*].Address");
-        assertThat(recipients).containsExactlyInAnyOrder("anna@example.com", "bence@example.com");
+        List<Map<String, Object>> ours = JsonPath.<List<Map<String, Object>>>read(messages, "$.messages").stream()
+                .filter(message -> JsonPath.<List<String>>read(message, "$.To[*].Address").contains(anna))
+                .toList();
+        assertThat(ours).as("pontosan egy levél ennek a háztartásnak").hasSize(1);
+        Map<String, Object> message = ours.getFirst();
+        assertThat(message.get("Subject")).isEqualTo("Family Fleet – közelgő határidők (2026-10-28)");
+        List<String> recipients = JsonPath.read(message, "$.To[*].Address");
+        assertThat(recipients).containsExactlyInAnyOrder(anna, bence);
 
-        String id = JsonPath.read(messages, "$.messages[0].ID");
+        String id = (String) message.get("ID");
         String text = JsonPath.read(mailpit().get().uri("/api/v1/message/{id}", id).retrieve().body(String.class), "$.Text");
         assertThat(text)
                 .contains("2026-11-04 – Műszaki vizsga: Kovács szerviz")

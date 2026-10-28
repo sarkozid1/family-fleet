@@ -80,7 +80,9 @@ class VehicleRepositoryTest {
         vehicleRepository.saveAndFlush(new Vehicle(mine, VehicleType.CAR, "Skoda", "Octavia", "ABC123"));
         vehicleRepository.saveAndFlush(new Vehicle(partners, VehicleType.CAR, "Skoda", "Octavia", "ABC123"));
 
-        assertThat(vehicleRepository.count()).isEqualTo(2);
+        // Nem a tábla teljes tartalmát számoljuk: a közös tesztadatbázisban más tesztek járművei is lehetnek.
+        assertThat(vehicleRepository.existsByHouseholdIdAndLicensePlate(mine.getId(), "ABC123")).isTrue();
+        assertThat(vehicleRepository.existsByHouseholdIdAndLicensePlate(partners.getId(), "ABC123")).isTrue();
     }
 
     @Test
