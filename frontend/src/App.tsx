@@ -8,6 +8,7 @@ import { HouseholdsPage } from './pages/HouseholdsPage';
 import { LoginPage } from './pages/LoginPage';
 import { MembersTab } from './pages/MembersTab';
 import { OverviewTab } from './pages/OverviewTab';
+import { SharingTab } from './pages/SharingTab';
 import { VehiclesTab } from './pages/VehiclesTab';
 
 /** Csak bejelentkezve érhető el; különben a belépő oldalra irányít. */
@@ -44,6 +45,7 @@ export function App() {
               <Route path="deadlines" element={<DeadlinesTab />} />
               <Route path="vehicles" element={<VehiclesTab />} />
               <Route path="members" element={<MembersTab />} />
+              <Route path="sharing" element={<SharingTab />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

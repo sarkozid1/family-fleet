@@ -25,11 +25,18 @@ public final class TestAuth {
 
     private TestAuth() {}
 
+    /** Egy teszt-felhasználó és a nevében hívó MockMvc. */
+    public record TestUser(Long id, String email, MockMvc mockMvc) {}
+
     public static MockMvc mockMvcAsNewUser(WebApplicationContext context) {
         return mockMvcAs(context, Role.USER);
     }
 
     public static MockMvc mockMvcAs(WebApplicationContext context, Role role) {
+        return newUser(context, role).mockMvc();
+    }
+
+    public static TestUser newUser(WebApplicationContext context, Role role) {
         AppUserRepository users = context.getBean(AppUserRepository.class);
         PasswordEncoder passwordEncoder = context.getBean(PasswordEncoder.class);
         AppUser user = users.save(new AppUser(
@@ -37,8 +44,14 @@ public final class TestAuth {
                 passwordEncoder.encode("titkos-jelszo-123"),
                 "Teszt Elek",
                 role));
-        String token = context.getBean(JwtTokenService.class).issue(user).value();
+        return new TestUser(user.getId(), user.getEmail(), mockMvcWithToken(context, issueToken(context, user)));
+    }
 
+    public static String issueToken(WebApplicationContext context, AppUser user) {
+        return context.getBean(JwtTokenService.class).issue(user).value();
+    }
+
+    public static MockMvc mockMvcWithToken(WebApplicationContext context, String token) {
         return MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .addFilters(context.getBean(RequestIdFilter.class))

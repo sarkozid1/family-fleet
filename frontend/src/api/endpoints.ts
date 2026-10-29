@@ -11,6 +11,7 @@ import type {
   PaymentFrequency,
   Policy,
   PolicyType,
+  SharingEntry,
   TokenResponse,
   User,
   Vehicle,
@@ -43,6 +44,20 @@ export const listMembers = (householdId: number) =>
 
 export const addMember = (householdId: number, body: { name: string; email: string | null }) =>
   apiRequest<Member>('POST', `/households/${householdId}/members`, body);
+
+// --- Megosztás ----------------------------------------------------------------------------
+
+export const listSharing = (householdId: number) =>
+  apiRequest<SharingEntry[]>('GET', `/households/${householdId}/sharing`);
+
+export const shareHousehold = (householdId: number, email: string) =>
+  apiRequest<SharingEntry>('POST', `/households/${householdId}/sharing`, { email });
+
+export const revokeUserAccess = (householdId: number, userId: number) =>
+  apiRequest<void>('DELETE', `/households/${householdId}/sharing/users/${userId}`);
+
+export const revokeInvitation = (householdId: number, invitationId: number) =>
+  apiRequest<void>('DELETE', `/households/${householdId}/sharing/invitations/${invitationId}`);
 
 // --- Járművek -----------------------------------------------------------------------------
 

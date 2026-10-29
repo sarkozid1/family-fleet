@@ -45,7 +45,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Map<String, String> CONSTRAINT_MESSAGES = Map.of(
             "uq_vehicle_household_plate", "Ez a rendszám már szerepel ebben a háztartásban.",
             "uq_insurer_name", "Ilyen nevű biztosító már létezik.",
-            "ex_policy_kgfb_no_overlap", "A járműnek erre az időszakra már van érvényes KGFB-kötvénye.");
+            "ex_policy_kgfb_no_overlap", "A járműnek erre az időszakra már van érvényes KGFB-kötvénye.",
+            "uq_household_access_user_household", "Ez a felhasználó már hozzáfér a háztartáshoz.",
+            "uq_household_invitation_household_email", "Erre az e-mail-címre már van meghívó ebbe a háztartásba.");
 
     /** Egy mezőhöz (vagy az egész objektumhoz) tartozó validációs hiba a válaszban. */
     public record FieldViolation(String field, String message) {}
@@ -105,6 +107,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
         return problem(
                 ex, HttpStatus.FORBIDDEN, "Nincs jogosultság", "Ehhez a művelethez nincs jogosultságod.", request);
+    }
+
+    /** 403 saját, a kliensnek szóló üzenettel (pl. nem engedélyezett regisztráció). */
+    @ExceptionHandler(ForbiddenException.class)
+    ResponseEntity<Object> handleForbidden(ForbiddenException ex, WebRequest request) {
+        return problem(ex, HttpStatus.FORBIDDEN, "Nincs jogosultság", ex.getMessage(), request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

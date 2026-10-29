@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import hu.familyfleet.common.exception.ForbiddenException;
 import hu.familyfleet.security.dto.LoginRequest;
 import hu.familyfleet.security.dto.TokenResponse;
 import hu.familyfleet.security.dto.UserResponse;
@@ -76,6 +77,21 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("eyJ.token.value"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"));
+    }
+
+    @Test
+    void notAllowedRegistrationReturns403WithReason() throws Exception {
+        given(authService.register(any()))
+                .willThrow(new ForbiddenException("Ezzel az e-mail-címmel nem lehet regisztrálni."));
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "email": "idegen@example.com", "password": "nagyon-titkos-1", "displayName": "Idegen" }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Ezzel az e-mail-címmel nem lehet regisztrálni."));
     }
 
     @Test
