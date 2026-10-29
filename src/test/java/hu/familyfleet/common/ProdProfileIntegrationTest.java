@@ -31,7 +31,8 @@ import org.springframework.test.web.servlet.MockMvc;
             "MAIL_HOST=smtp.example.com",
             "REMINDER_FROM=noreply@example.com",
             "JWT_SECRET=prod-test-secret-0123456789abcdefghijklmnop",
-            "PORT=9191"
+            "PORT=9191",
+            "REGISTRATION_ALLOWED_EMAILS=proxy-parent@example.com, Other.Parent@Example.com"
         })
 @AutoConfigureMockMvc
 @ActiveProfiles("prod")
@@ -75,9 +76,28 @@ class ProdProfileIntegrationTest {
                         .header("X-Forwarded-Port", "443")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "email": "proxy-%s@example.com", "password": "proxy-jelszo-1", "displayName": "Proxy" }
-                                """.formatted(UUID.randomUUID())))
+                                { "email": "proxy-parent@example.com", "password": "proxy-jelszo-1", "displayName": "Proxy" }
+                                """))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "https://family-fleet.up.railway.app/api/auth/me"));
+    }
+
+    /** Élesben zárt a regisztráció: csak a REGISTRATION_ALLOWED_EMAILS címei (és a meghívottak) regisztrálhatnak. */
+    @Test
+    void registrationIsClosedExceptForAllowedEmails() throws Exception {
+        assertThat(environment.getProperty("app.security.registration.open")).isEqualTo("false");
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "email": "stranger-%s@example.com", "password": "idegen-jelszo-1", "displayName": "Idegen" }
+                                """.formatted(UUID.randomUUID())))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "email": "other.parent@example.com", "password": "szulo-jelszo-1", "displayName": "Szülő" }
+                                """))
+                .andExpect(status().isCreated());
     }
 }
