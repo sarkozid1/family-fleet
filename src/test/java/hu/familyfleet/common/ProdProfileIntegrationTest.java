@@ -3,15 +3,19 @@ package hu.familyfleet.common;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import hu.familyfleet.TestcontainersConfiguration;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,7 +30,8 @@ import org.springframework.test.web.servlet.MockMvc;
             "DB_PASSWORD=unused",
             "MAIL_HOST=smtp.example.com",
             "REMINDER_FROM=noreply@example.com",
-            "JWT_SECRET=prod-test-secret-0123456789abcdefghijklmnop"
+            "JWT_SECRET=prod-test-secret-0123456789abcdefghijklmnop",
+            "PORT=9191"
         })
 @AutoConfigureMockMvc
 @ActiveProfiles("prod")
@@ -57,5 +62,22 @@ class ProdProfileIntegrationTest {
         assertThat(environment.getProperty("app.reminder.from")).isEqualTo("noreply@example.com");
         assertThat(environment.getProperty("logging.level.org.hibernate.SQL")).isNull();
         assertThat(environment.getProperty("logging.structured.format.console")).isEqualTo("ecs");
+    }
+
+    /** Felhős platformon (Railway): a portot a PORT változó adja, a proxy HTTPS-ét a linkek is tükrözik. */
+    @Test
+    void portComesFromPlatformAndLinksRespectTheProxy() throws Exception {
+        assertThat(environment.getProperty("server.port")).isEqualTo("9191");
+
+        mockMvc.perform(post("/api/auth/register")
+                        .header("X-Forwarded-Proto", "https")
+                        .header("X-Forwarded-Host", "family-fleet.up.railway.app")
+                        .header("X-Forwarded-Port", "443")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "email": "proxy-%s@example.com", "password": "proxy-jelszo-1", "displayName": "Proxy" }
+                                """.formatted(UUID.randomUUID())))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "https://family-fleet.up.railway.app/api/auth/me"));
     }
 }

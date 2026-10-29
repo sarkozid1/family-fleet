@@ -165,7 +165,7 @@
 							<goal>npm</goal>
 						</goals>
 						<configuration>
-							<arguments>ci --no-audit --no-fund</arguments>
+							<arguments>ci --no-audit --no-fund --update-notifier=false</arguments>
 						</configuration>
 					</execution>
 					<execution>

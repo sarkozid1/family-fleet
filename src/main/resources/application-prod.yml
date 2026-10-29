@@ -3,10 +3,18 @@
 # kötelezőknek szándékosan nincs alapértéke, így hiányuk esetén az alkalmazás el sem indul.
 #
 # Kötelező:  DB_URL, DB_USERNAME, DB_PASSWORD, MAIL_HOST, REMINDER_FROM, JWT_SECRET (min. 32 karakter)
-# Opcionális: JWT_TTL (PT1H), MAIL_PORT (587), MAIL_USERNAME, MAIL_PASSWORD, MAIL_SMTP_AUTH (true),
-#             MAIL_SMTP_STARTTLS (true), REMINDER_CRON, REMINDER_ENABLED (true),
+# Opcionális: PORT (8080), JWT_TTL (PT1H), MAIL_PORT (587), MAIL_USERNAME, MAIL_PASSWORD,
+#             MAIL_SMTP_AUTH (true), MAIL_SMTP_STARTTLS (true), REMINDER_CRON, REMINDER_ENABLED (true),
 #             API_DOCS_ENABLED (false)
 # =========================================================
+server:
+  # A felhős platformok (Railway, Heroku, Cloud Run) a PORT változóban adják meg a portot.
+  port: ${PORT:8080}
+  # A platform proxyja zárja le a HTTPS-t, és X-Forwarded-* fejlécekben adja tovább az eredeti
+  # sémát és hostot. E nélkül a generált linkek (pl. a 201-es Location fejléc) http://belső-cím
+  # alakúak lennének.
+  forward-headers-strategy: framework
+
 spring:
   datasource:
     url: ${DB_URL}
