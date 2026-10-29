@@ -51,8 +51,12 @@ Az `/api/**` végpontok (a regisztráció és a bejelentkezés kivételével) JW
 2. `POST /api/auth/login` – a válasz `accessToken` mezője egy 1 óráig érvényes token
 3. minden további kérés: `Authorization: Bearer <accessToken>`
 
-Mindenki csak a saját háztartásait látja; idegen háztartás adatai 404-et adnak (lásd
-[ADR-0003](docs/adr/0003-authentication-and-authorization.md)). Biztosítót felvenni csak
+Mindenki csak azokat a háztartásokat látja, amelyekhez hozzáfér; idegen háztartás adatai 404-et
+adnak (lásd [ADR-0003](docs/adr/0003-authentication-and-authorization.md)). Egy háztartás a
+**Megosztás** fülön (`/api/households/{id}/sharing`) más e-mail-címekkel is megosztható; akinek még
+nincs fiókja, meghívót kap. Élesben a regisztráció zárt: csak a `REGISTRATION_ALLOWED_EMAILS`
+címei és a meghívottak regisztrálhatnak (lásd
+[ADR-0004](docs/adr/0004-household-sharing-and-closed-registration.md)). Biztosítót felvenni csak
 `ADMIN` szerepkörrel lehet, ezt adatbázisból lehet megadni
 (`UPDATE app_user SET role = 'ADMIN' WHERE email = '...'`). Az [`http/auth.http`](http/auth.http)
 fájlt kell elsőként futtatni, az eltárolja a tokent a többi kéréshez. A Swagger UI-ban az
@@ -95,7 +99,8 @@ backenden dolgozol, a frontend buildje kihagyható: `.\mvnw.cmd spring-boot:run 
 
 A `prod` profil kötelező környezeti változói (alapérték nélkül, hiányukban az alkalmazás nem indul):
 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `MAIL_HOST`, `REMINDER_FROM`, `JWT_SECRET` (legalább 32 karakter).
-Opcionálisak: `JWT_TTL` (PT1H), `MAIL_PORT` (587), `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SMTP_AUTH`,
+Ajánlott: `REGISTRATION_ALLOWED_EMAILS` (nélküle csak meghívóval lehet regisztrálni).
+Opcionálisak: `PORT` (8080), `REGISTRATION_OPEN` (false), `JWT_TTL` (PT1H), `MAIL_PORT` (587), `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SMTP_AUTH`,
 `MAIL_SMTP_STARTTLS`, `REMINDER_ENABLED`, `REMINDER_CRON`, `API_DOCS_ENABLED` (false).
 A teljes lista az [`application-prod.yml`](src/main/resources/application-prod.yml) fejlécében.
 

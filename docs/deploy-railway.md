@@ -44,12 +44,16 @@ MAIL_PORT=587
 MAIL_USERNAME=<smtp felhasználó>
 MAIL_PASSWORD=<smtp jelszó>
 JAVA_TOOL_OPTIONS=-Xmx384m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
+REGISTRATION_ALLOWED_EMAILS=<a te e-mail-címed>
 ```
 
 - A `${{Postgres.…}}` hivatkozásokat a Railway tölti ki az adatbázis adataival; a jelszót nem
   kell kimásolni sehova.
 - A `PORT`-ot nem kell megadni: a Railway adja, és az alkalmazás azon figyel.
 - A `SPRING_PROFILES_ACTIVE=prod` a Dockerfile-ban már be van állítva.
+- **`REGISTRATION_ALLOWED_EMAILS`**: élesben zárt a regisztráció. Elég a saját címedet megadnod
+  (több cím vesszővel elválasztva). A család többi tagját a felületről hívod meg, a meghívó
+  egyben engedély is a regisztrációra (ADR-0004).
 - **`JWT_SECRET` előállítása** (PowerShell, kriptográfiailag erős véletlen):
 
   ```powershell
@@ -80,17 +84,20 @@ ellenőrzései (`./mvnw verify`, Docker build) zöldek. Így piros build soha ne
 A health check (`/actuator/health/readiness`) a `railway.json`-ban van: az új verzió csak akkor
 kap forgalmat, ha az alkalmazás elindult és az adatbázist eléri; különben a régi fut tovább.
 
-## 6. Első belépés és admin
+## 6. Első belépés, család meghívása, admin
 
-1. Nyisd meg a publikus címet, és regisztrálj.
-2. Biztosító felvételéhez admin szerepkör kell. A `Postgres` szolgáltatásnál a **Data** fülön
+1. Nyisd meg a publikus címet, és regisztrálj a `REGISTRATION_ALLOWED_EMAILS`-ben megadott címmel.
+2. Hozd létre a háztartást, majd a **Megosztás** fülön add meg a családtagok e-mail-címét.
+   Akinek még nincs fiókja, meghívót kap: amikor ezzel a címmel regisztrál, automatikusan látja
+   a háztartást. (Értesítő e-mail nem megy ki, a címet neked kell elküldened nekik.)
+3. Biztosító felvételéhez admin szerepkör kell. A `Postgres` szolgáltatásnál a **Data** fülön
    (vagy a Railway CLI-vel: `railway connect Postgres`) futtasd:
 
    ```sql
    UPDATE app_user SET role = 'ADMIN' WHERE email = 'a-te-cimed@example.com';
    ```
 
-3. Jelentkezz ki és be, hogy az új token már az admin szerepkört tartalmazza.
+4. Jelentkezz ki és be, hogy az új token már az admin szerepkört tartalmazza.
 
 ## E-mail
 
@@ -129,6 +136,6 @@ ha a levelek nem érkeznek meg, a Railway logjában (**Deployments → View Logs
 
 - [ ] Erős, véletlen `JWT_SECRET`
 - [ ] `API_DOCS_ENABLED` nincs beállítva (a Swagger UI élesben ki van kapcsolva)
-- [ ] Regisztráció lezárása (engedélyezett e-mail-lista) – külön fejlesztés
-- [ ] Háztartás megosztása a családtagokkal – külön fejlesztés
+- [ ] `REGISTRATION_ALLOWED_EMAILS` beállítva, `REGISTRATION_OPEN` nincs beállítva (zárt regisztráció)
+- [ ] A háztartás megosztva a családtagokkal (Megosztás fül)
 - [ ] Mentés bekapcsolva

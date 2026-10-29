@@ -9,6 +9,7 @@ A részletes döntések az [ADR-ekben](adr) vannak:
 - [ADR-0001](adr/0001-shared-deadline-entity.md): közös határidő-entitás
 - [ADR-0002](adr/0002-deadline-generation-rules.md): határidők generálása és ismétlődése
 - [ADR-0003](adr/0003-authentication-and-authorization.md): JWT-hitelesítés és háztartásszintű jogosultság
+- [ADR-0004](adr/0004-household-sharing-and-closed-registration.md): háztartás-megosztás és zárt regisztráció
 
 ## Csomagok és rétegek
 
@@ -46,6 +47,8 @@ csomagfüggés.
 erDiagram
     APP_USER ||--o{ HOUSEHOLD_ACCESS : "hozzáfér"
     HOUSEHOLD ||--o{ HOUSEHOLD_ACCESS : ""
+    HOUSEHOLD ||--o{ HOUSEHOLD_INVITATION : "meghívói"
+    APP_USER ||--o{ HOUSEHOLD_INVITATION : "meghívta"
     HOUSEHOLD ||--o{ HOUSEHOLD_MEMBER : "tagjai"
     HOUSEHOLD ||--o{ VEHICLE : "járművei"
     HOUSEHOLD_MEMBER |o--o{ VEHICLE : "tulajdonos"
@@ -68,6 +71,12 @@ erDiagram
         bigint id PK
         bigint user_id FK
         bigint household_id FK
+    }
+    HOUSEHOLD_INVITATION {
+        bigint id PK
+        bigint household_id FK
+        varchar email "még nem regisztrált cím"
+        bigint invited_by_user_id FK
     }
     HOUSEHOLD {
         bigint id PK
@@ -131,6 +140,7 @@ Fontosabb adatbázis-szintű szabályok (a kód is ellenőrzi őket, az adatbáz
 | `ck_deadline_completed_at` | Teljesítési időpont pontosan a DONE állapotú határidőnél |
 | `uq_reminder_log_household_date` | Háztartásonként naponta legfeljebb egy emlékeztető |
 | `uq_household_access_user_household` | Egy felhasználó–háztartás páros egyszer |
+| `uq_household_invitation_household_email` | Egy címre háztartásonként egy meghívó |
 
 A részleges index (`idx_deadline_open_due … WHERE status = 'OPEN'`) a leggyakoribb lekérdezést, a
 közelgő nyitott határidőket szolgálja ki.
