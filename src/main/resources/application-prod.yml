@@ -3,7 +3,8 @@
 # kötelezőknek szándékosan nincs alapértéke, így hiányuk esetén az alkalmazás el sem indul.
 #
 # Kötelező:  DB_URL, DB_USERNAME, DB_PASSWORD, MAIL_HOST, REMINDER_FROM, JWT_SECRET (min. 32 karakter)
-# Opcionális: PORT (8080), JWT_TTL (PT1H), MAIL_PORT (587), MAIL_USERNAME, MAIL_PASSWORD,
+# Ajánlott:  REGISTRATION_ALLOWED_EMAILS (vesszővel elválasztva; nélküle csak meghívóval lehet regisztrálni)
+# Opcionális: PORT (8080), REGISTRATION_OPEN (false), JWT_TTL (PT1H), MAIL_PORT (587), MAIL_USERNAME, MAIL_PASSWORD,
 #             MAIL_SMTP_AUTH (true), MAIL_SMTP_STARTTLS (true), REMINDER_CRON, REMINDER_ENABLED (true),
 #             API_DOCS_ENABLED (false)
 # =========================================================
@@ -34,6 +35,10 @@ app:
     jwt:
       secret: ${JWT_SECRET}
       ttl: ${JWT_TTL:PT1H}
+    registration:
+      # Élesben alapból zárt: csak a felsorolt címek és a háztartásba meghívottak regisztrálhatnak.
+      open: ${REGISTRATION_OPEN:false}
+      allowed-emails: ${REGISTRATION_ALLOWED_EMAILS:}
   reminder:
     enabled: ${REMINDER_ENABLED:true}
     cron: ${REMINDER_CRON:0 0 7 * * *}

@@ -1,6 +1,7 @@
 package hu.familyfleet.security;
 
 import hu.familyfleet.common.exception.ConflictException;
+import hu.familyfleet.common.exception.ForbiddenException;
 import hu.familyfleet.common.exception.ResourceNotFoundException;
 import hu.familyfleet.security.dto.LoginRequest;
 import hu.familyfleet.security.dto.RegisterRequest;
@@ -8,6 +9,7 @@ import hu.familyfleet.security.dto.TokenResponse;
 import hu.familyfleet.security.dto.UserResponse;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,16 +26,28 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenService tokenService;
     private final CurrentUser currentUser;
+    private final RegistrationPolicy registrationPolicy;
+    private final ApplicationEventPublisher eventPublisher;
 
-    /** Önregisztráció mindig USER szerepkörrel; adminná csak adatbázisból lehet válni (ADR-0003). */
+    /**
+     * Önregisztráció mindig USER szerepkörrel; adminná csak adatbázisból lehet válni (ADR-0003).
+     * A szabályt a foglalt e-mail ellenőrzése ELŐTT nézzük: egy kívülálló a 403-ból nem tudja meg,
+     * hogy egy cím regisztrálva van-e.
+     */
     @Transactional
     public UserResponse register(RegisterRequest request) {
         String email = AppUser.normalizeEmail(request.email());
+        if (!registrationPolicy.allows(email)) {
+            throw new ForbiddenException(
+                    "Ezzel az e-mail-címmel nem lehet regisztrálni. Kérj meghívót egy családtagtól.");
+        }
         if (userRepository.existsByEmail(email)) {
             throw new ConflictException("Ezzel az e-mail-címmel már regisztráltak.");
         }
         AppUser user = userRepository.save(
                 new AppUser(email, passwordEncoder.encode(request.password()), request.displayName(), Role.USER));
+        // A household csomag ugyanebben a tranzakcióban hozzáféréssé alakítja a címre szóló meghívókat.
+        eventPublisher.publishEvent(new UserRegisteredEvent(user.getId(), user.getEmail()));
         return UserResponse.from(user);
     }
 

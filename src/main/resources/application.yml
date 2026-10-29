@@ -39,6 +39,9 @@ app:
       # A titok (secret) szándékosan nincs itt: dev-ben az application-dev.yml, élesben a JWT_SECRET adja.
       issuer: family-fleet
       ttl: PT1H
+    registration:
+      # Fejlesztésben és tesztben bárki regisztrálhat; élesben zárt (application-prod.yml).
+      open: true
   reminder:
     # Napi emlékeztető: minden reggel 7-kor, 30/7/1 nappal az esedékesség előtt
     enabled: true

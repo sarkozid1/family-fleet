@@ -117,6 +117,16 @@ export interface Deadline {
   version: number;
 }
 
+export interface SharingEntry {
+  status: 'ACTIVE' | 'PENDING';
+  userId: number | null;
+  invitationId: number | null;
+  email: string;
+  displayName: string | null;
+  you: boolean;
+  since: string;
+}
+
 export interface CompleteDeadlineResponse {
   completed: Deadline;
   next: Deadline | null;

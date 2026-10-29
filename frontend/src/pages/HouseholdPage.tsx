@@ -31,6 +31,7 @@ export function HouseholdPage() {
         <NavLink to="deadlines">Határidők</NavLink>
         <NavLink to="vehicles">Járművek és kötvények</NavLink>
         <NavLink to="members">Tagok</NavLink>
+        <NavLink to="sharing">Megosztás</NavLink>
       </nav>
       <Outlet context={{ household: household.data } satisfies HouseholdContext} />
     </div>
