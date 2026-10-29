@@ -6,18 +6,21 @@
 FROM eclipse-temurin:21.0.12_8-jdk-noble AS build
 WORKDIR /workspace
 
-# Előbb csak a build-leírók: amíg a pom.xml nem változik, ez a réteg a cache-ből jön.
+# Előbb csak a függőségleírók (pom.xml, package-lock.json): amíg ezek nem változnak, a letöltött
+# Maven-függőségek, a Node és az npm-cache rétege a Docker-cache-ből jön. Szándékosan nem
+# BuildKit cache-mount: azt nem minden builder támogatja ugyanígy (pl. a Railway sajátos
+# azonosító-formátumot vár), a rétegcache viszont mindenhol működik.
 COPY mvnw pom.xml lombok.config ./
 COPY .mvn .mvn
-RUN chmod +x mvnw
+COPY frontend/package.json frontend/package-lock.json frontend/
+RUN chmod +x mvnw \
+    && ./mvnw -B -ntp dependency:go-offline \
+    && ./mvnw -B -ntp frontend:install-node-and-npm@install-node-and-npm frontend:npm@npm-ci
 
 COPY frontend frontend
 COPY src src
-# A Maven- és az npm-cache BuildKit cache-ben marad a buildek között, nem kerül bele az image-be.
 # A Maven a frontend-maven-pluginnal a React-felületet is felépíti (target/classes/static).
-RUN --mount=type=cache,target=/root/.m2 \
-    --mount=type=cache,target=/root/.npm \
-    ./mvnw -B -ntp package -DskipTests -Djacoco.skip=true -Dspotless.check.skip=true
+RUN ./mvnw -B -ntp package -DskipTests -Djacoco.skip=true -Dspotless.check.skip=true
 
 # A Spring Boot "réteges" kibontása: függőségek, loader, saját kód külön rétegben.
 # Kódváltozáskor csak a kicsi "application" réteg változik, a nagy függőség-réteg cache-ből jön.
@@ -40,7 +43,8 @@ COPY --from=build --chown=spring:spring /workspace/extracted/application/ ./
 USER spring:spring
 
 # Éles profil; a titkokat (DB_URL, JWT_SECRET, ...) futtatáskor környezeti változóként kell átadni.
-# A JVM a konténer memóriakorlátjához igazodik.
+# A JVM a konténer memóriakorlátjához igazodik. Felhasználás szerint számlázó platformon (Railway)
+# érdemes felülírni egy fix felső korláttal, lásd docs/deploy-railway.md.
 ENV SPRING_PROFILES_ACTIVE=prod \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 
