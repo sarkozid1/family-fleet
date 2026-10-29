@@ -128,6 +128,11 @@ A `verify` a teszteken túl minőségi kapukat is ellenőriz:
 Ugyanez fut a GitHub Actions CI-ban minden PR-ra és a `main`-re, és ott a Docker-image buildje is
 ellenőrizve van.
 
+## Telepítés
+
+A legegyszerűbb út a Railway: a GitHub-repóból a `Dockerfile` alapján buildel, kezelt
+PostgreSQL-t és HTTPS-es címet ad. Lépésről lépésre: [docs/deploy-railway.md](docs/deploy-railway.md).
+
 ## Docker
 
 Multi-stage build (JDK-val fordít, csak JRE-vel fut), nem root felhasználóval, `prod` profillal:
